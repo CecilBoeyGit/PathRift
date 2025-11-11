@@ -39,8 +39,22 @@ EditorBuildSettings:
     path: Assets/Samples/Niantic Lightship Meta Plugin/3.16.0-2509150829/Samples/VPS/Scenes/VPSLocalization.unity
     guid: 557a3a3fa75464629a86f4f21c52907e
   - enabled: 1
+<<<<<<< HEAD
     path: Assets/Scenes/Orbs/Orbs Test Scene.unity
     guid: 18581701161cf364e9dcdd7c74c8f194
+=======
+    path: Assets/Scenes/CecilTest/CecilTest.unity
+    guid: 30cbaf3073ed90c47bc1d3f5439d6c61
+  - enabled: 0
+    path: Assets/Samples/Niantic Lightship Meta Plugin/3.16.0-2509150829/Samples/ObjectDetection/Scenes/ObjectDetection_OVR.unity
+    guid: 42f383eabb7bf484bb66b2722813e0b1
+  - enabled: 0
+    path: Assets/Samples/Niantic Lightship Meta Plugin/3.16.0-2509150829/Samples/Depth/Scenes/DepthImageCustom.unity
+    guid: c67ff876216db62439f1551aeb9900f5
+  - enabled: 0
+    path: Assets/Scenes/CecilTest/CecilTest_OVR.unity
+    guid: caf7792e60528c1469447c603814bd50
+>>>>>>> origin/CecilBranch
   m_configObjects:
     Niantic.Lightship.AR.LightshipSettings: {fileID: 11400000, guid: 718af2b86b7abc149b24e6e76bac0bdf, type: 2}
     UnityEditor.XR.ARCore.ARCoreSettings: {fileID: 11400000, guid: 20e43a33c1de9b946b4fdd75f8ec4d3a, type: 2}
