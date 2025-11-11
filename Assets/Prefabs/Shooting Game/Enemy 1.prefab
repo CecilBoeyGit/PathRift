@@ -338,8 +338,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   player: {fileID: 0}
   bodyPivot: {fileID: 780728658404936368}
-  bulletPrefab: {fileID: 7776143927699950310, guid: 52c40b4c631993049b64f096df7a107b, type: 3}
   firePoint: {fileID: 2325442633098331188}
+  bulletPrefab: {fileID: 7776143927699950310, guid: 52c40b4c631993049b64f096df7a107b, type: 3}
   rotationSpeed: 5
   minShootDelay: 3
   maxShootDelay: 5
@@ -347,3 +347,4 @@ MonoBehaviour:
   minBurstCount: 5
   maxBurstCount: 6
   bulletSpeed: 20
+  poolSize: 30

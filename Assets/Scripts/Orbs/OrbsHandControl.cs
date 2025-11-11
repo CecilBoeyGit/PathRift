@@ -55,7 +55,7 @@ public class OrbsHandControl : MonoBehaviour
     Vector3 handForwardAxis;
     Vector3 handSideAxis;
 
-    private List<Transform> activeOrbs = new List<Transform>();
+    public List<Transform> activeOrbs = new List<Transform>();
 
     // Start is called before the first frame update
     void Start()
