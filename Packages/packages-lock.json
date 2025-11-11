@@ -96,7 +96,7 @@
       "url": "https://packages.unity.com"
     },
     "com.nianticlabs.lightship": {
-      "version": "file:C:/Users/cecil/Downloads/ardk-upm-3.16.0.tgz",
+      "version": "file:../ardk-upm-3.16.0.tgz",
       "depth": 0,
       "source": "local-tarball",
       "dependencies": {
@@ -112,7 +112,7 @@
       }
     },
     "com.nianticlabs.lightship.metaquest": {
-      "version": "file:C:/Users/cecil/Downloads/ardk-quest3-upm-3.16.0.tgz",
+      "version": "file:../ardk-quest3-upm-3.16.0.tgz",
       "depth": 0,
       "source": "local-tarball",
       "dependencies": {
@@ -175,15 +175,6 @@
       "depth": 1,
       "source": "builtin",
       "dependencies": {}
-    },
-    "com.unity.ide.rider": {
-      "version": "3.0.37",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.ext.nunit": "1.0.6"
-      },
-      "url": "https://packages.unity.com"
     },
     "com.unity.ide.visualstudio": {
       "version": "2.0.23",
