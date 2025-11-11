@@ -22,9 +22,9 @@ public class CrystalBehavior : MonoBehaviour
 
     private IEnumerator DisableAfterDelay()
     {
-        ResetTransform();
         float waitTime = Random.Range(8f, 10f);
         yield return new WaitForSeconds(waitTime);
+        ResetTransform();
         gameObject.SetActive(false);
     }
     public void ResetTransform()

@@ -92,8 +92,9 @@ public class Orb : MonoBehaviour
 
         transform.position = Vector3.MoveTowards(transform.position, hitPos, speed * Time.deltaTime);
         
-        if (Vector3.Distance(transform.position, hitPos) < 0.05f)
+        if (Vector3.Distance(transform.position, hitPos) < 0.1f)
         {
+            CreateCrystals();
             hitPos = Vector3.zero;
             currentState = OrbState.Return;
         }
@@ -121,6 +122,45 @@ public class Orb : MonoBehaviour
         particleEffects[index].Play();
     }
 
+    void CreateCrystals()
+    {
+        int spawnCount = Random.Range(2, 4);
+
+        for (int i = 0; i < spawnCount; i++)
+        {
+            // Pool management — grab from front, recycle to back
+            GameObject crystal = orbsController.crystalsPool[0];
+            orbsController.crystalsPool.RemoveAt(0);
+            orbsController.crystalsPool.Add(crystal);
+
+            // Position and activate
+            crystal.transform.position = hitPos;
+            crystal.SetActive(true);
+
+            // Align 'up' with the normal (vertical orientation)
+            crystal.transform.up = Vector3.up;
+
+            // Apply random positional offset BEFORE rotation
+            float offsetDist = Random.Range(0.2f, 0.4f);
+            float offsetAngle = Random.Range(0f, 360f);
+            Vector3 offsetDir = new Vector3(Mathf.Cos(offsetAngle * Mathf.Deg2Rad), 0f, Mathf.Sin(offsetAngle * Mathf.Deg2Rad));
+            crystal.transform.position += offsetDir * offsetDist;
+
+            // Apply small random rotation offset (3–12 degrees)
+            float tiltX = Random.Range(-8f, 8f); // degrees
+            float tiltZ = Random.Range(-8f, 8f); // degrees
+            Quaternion tiltRot = Quaternion.Euler(tiltX, 0f, tiltZ);
+            crystal.transform.rotation = tiltRot * crystal.transform.rotation;
+
+            // Random scale
+            Vector3 newScale = crystal.transform.localScale;
+            newScale.x = Random.Range(0.65f, 1.1f);
+            newScale.z = Random.Range(0.65f, 1.1f);
+            newScale.y = Random.Range(0.7f, 1.3f);
+            crystal.transform.localScale = newScale;
+        }
+    }
+
 
     void OnCollisionEnter(Collision other)
     {
@@ -132,37 +172,37 @@ public class Orb : MonoBehaviour
             }
             else
             {
-                Vector3 contactNormal = other.contacts[0].normal;
-                Vector3 contactPoint = other.contacts[0].point;
+                // Vector3 contactNormal = other.contacts[0].normal;
+                // Vector3 contactPoint = other.contacts[0].point;
 
-                // Number of crystals to spawn (2–3)
-                int spawnCount = Random.Range(2, 4);
+                // // Number of crystals to spawn (2–3)
+                // int spawnCount = Random.Range(2, 4);
 
-                for (int i = 0; i < spawnCount; i++)
-                {
-                    // Pool management — grab from front, recycle to back
-                    GameObject crystal = orbsController.crystalsPool[0];
-                    orbsController.crystalsPool.RemoveAt(0);
-                    orbsController.crystalsPool.Add(crystal);
+                // for (int i = 0; i < spawnCount; i++)
+                // {
+                //     // Pool management — grab from front, recycle to back
+                //     GameObject crystal = orbsController.crystalsPool[0];
+                //     orbsController.crystalsPool.RemoveAt(0);
+                //     orbsController.crystalsPool.Add(crystal);
 
-                    // Position and activate
-                    crystal.transform.position = contactPoint;
-                    crystal.SetActive(true);
+                //     // Position and activate
+                //     crystal.transform.position = contactPoint;
+                //     crystal.SetActive(true);
 
-                    // Align 'up' with the normal
-                    crystal.transform.up = contactNormal;
+                //     // Align 'up' with the normal
+                //     crystal.transform.up = contactNormal;
 
-                    // Apply small random rotation offset (3–12 degrees)
-                    float randomRot = Random.Range(3f, 12f);
-                    crystal.transform.Rotate(contactNormal, randomRot, Space.World);
+                //     // Apply small random rotation offset (3–12 degrees)
+                //     float randomRot = Random.Range(3f, 12f);
+                //     crystal.transform.Rotate(contactNormal, randomRot, Space.World);
 
-                    // Random scale
-                    Vector3 newScale = crystal.transform.localScale;
-                    newScale.x = Random.Range(0.8f, 1.3f);
-                    newScale.z = Random.Range(0.8f, 1.3f);
-                    newScale.y = Random.Range(1.3f, 1.9f);
-                    crystal.transform.localScale = newScale;
-                }
+                //     // Random scale
+                //     Vector3 newScale = crystal.transform.localScale;
+                //     newScale.x = Random.Range(0.8f, 1.3f);
+                //     newScale.z = Random.Range(0.8f, 1.3f);
+                //     newScale.y = Random.Range(1.3f, 1.9f);
+                //     crystal.transform.localScale = newScale;
+                // }
             }
 
             collided = true;

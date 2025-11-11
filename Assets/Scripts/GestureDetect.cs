@@ -176,12 +176,10 @@ public class GestureDetect : MonoBehaviour
                 UpdateDebugRot();
             }
 
-
             // for (int i = 0; i < fingerColliders.Length; i++)
             // {
             //     fingerColliders[i].position = fingerbones[10 + i*5].Transform.position;
             // }
-
         }
     }
 
