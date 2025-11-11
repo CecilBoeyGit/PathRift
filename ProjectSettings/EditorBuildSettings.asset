@@ -5,39 +5,51 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Samples/Niantic Lightship Meta Plugin/3.16.0-2509150829/Samples/Home/Scenes/Home.unity
     guid: 7cf0dc8fa0932463daa724a504e05b60
-  - enabled: 1
+  - enabled: 0
     path: Assets/Samples/Niantic Lightship Meta Plugin/3.16.0-2509150829/Samples/CameraImage/Scenes/CameraDisplay.unity
     guid: 49f9ec492e30143b8a4a4fc88dae7cc8
-  - enabled: 1
+  - enabled: 0
     path: Assets/Samples/Niantic Lightship Meta Plugin/3.16.0-2509150829/Samples/Depth/Scenes/DepthImage.unity
     guid: 00be92578443d4ee3b50bfd7afa46451
-  - enabled: 1
+  - enabled: 0
     path: Assets/Samples/Niantic Lightship Meta Plugin/3.16.0-2509150829/Samples/Depth/Scenes/Occlusion.unity
     guid: dafbf4e518f394196b2638d9a6d2faec
-  - enabled: 1
+  - enabled: 0
     path: Assets/Samples/Niantic Lightship Meta Plugin/3.16.0-2509150829/Samples/DeviceMapping/Scenes/CloudDeviceMapping.unity
     guid: ec123209b18844f8da8337a514b04ada
-  - enabled: 1
+  - enabled: 0
     path: Assets/Samples/Niantic Lightship Meta Plugin/3.16.0-2509150829/Samples/DeviceMapping/Scenes/DeviceMapping.unity
     guid: fd5b0d756def84c4d827f43c58ae0d8b
-  - enabled: 1
+  - enabled: 0
     path: Assets/Samples/Niantic Lightship Meta Plugin/3.16.0-2509150829/Samples/Meshing/Scenes/Meshing.unity
     guid: 9719291c966754089b079f4e5d920e6c
-  - enabled: 1
+  - enabled: 0
     path: Assets/Samples/Niantic Lightship Meta Plugin/3.16.0-2509150829/Samples/ObjectDetection/Scenes/ObjectDetection.unity
     guid: 11124c9c54ffd46008f1b2b5c2ed038e
-  - enabled: 1
+  - enabled: 0
     path: Assets/Samples/Niantic Lightship Meta Plugin/3.16.0-2509150829/Samples/Semantics/Scenes/SemanticsImage.unity
     guid: 4fcd598b83d244d6fbe5169ac8c9cbb6
-  - enabled: 1
+  - enabled: 0
     path: Assets/Samples/Niantic Lightship Meta Plugin/3.16.0-2509150829/Samples/Semantics/Scenes/SemanticsPicker.unity
     guid: e068a7ac72f8b4c1682605dcfecd79ce
-  - enabled: 1
+  - enabled: 0
     path: Assets/Samples/Niantic Lightship Meta Plugin/3.16.0-2509150829/Samples/VPS/Scenes/VPSLocalization.unity
     guid: 557a3a3fa75464629a86f4f21c52907e
+  - enabled: 1
+    path: Assets/Scenes/CecilTest/CecilTest.unity
+    guid: 30cbaf3073ed90c47bc1d3f5439d6c61
+  - enabled: 0
+    path: Assets/Samples/Niantic Lightship Meta Plugin/3.16.0-2509150829/Samples/ObjectDetection/Scenes/ObjectDetection_OVR.unity
+    guid: 42f383eabb7bf484bb66b2722813e0b1
+  - enabled: 0
+    path: Assets/Samples/Niantic Lightship Meta Plugin/3.16.0-2509150829/Samples/Depth/Scenes/DepthImageCustom.unity
+    guid: c67ff876216db62439f1551aeb9900f5
+  - enabled: 0
+    path: Assets/Scenes/CecilTest/CecilTest_OVR.unity
+    guid: caf7792e60528c1469447c603814bd50
   m_configObjects:
     Niantic.Lightship.AR.LightshipSettings: {fileID: 11400000, guid: 718af2b86b7abc149b24e6e76bac0bdf, type: 2}
     UnityEditor.XR.ARCore.ARCoreSettings: {fileID: 11400000, guid: 20e43a33c1de9b946b4fdd75f8ec4d3a, type: 2}
