@@ -73,7 +73,7 @@ public class Enemy1 : MonoBehaviour
     {
         if (!player || !bodyPivot) return;
 
-        Vector3 playerPos = player.position - new Vector3(0, 0.4f, 0);
+        Vector3 playerPos = player.position - new Vector3(0, 0.28f, 0);
         Vector3 direction = (playerPos - bodyPivot.position).normalized;
         Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
         bodyPivot.rotation = Quaternion.Slerp(bodyPivot.rotation, targetRotation, Time.deltaTime * rotationSpeed);

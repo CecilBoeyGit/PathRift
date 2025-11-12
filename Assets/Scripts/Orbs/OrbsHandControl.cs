@@ -406,7 +406,7 @@ public class OrbsHandControl : MonoBehaviour
             bullet.SetActive(true);
 
             Rigidbody rb = bullet.GetComponent<Rigidbody>();
-            rb.AddForce(bullet.transform.forward * 10, ForceMode.Impulse);
+            rb.AddForce(bullet.transform.forward * 20, ForceMode.Impulse);
 
             yield return new WaitForSeconds(fireRate);
         }

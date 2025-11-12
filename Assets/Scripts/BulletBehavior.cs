@@ -18,6 +18,7 @@ public class BulletBehavior : MonoBehaviour
     void OnEnable()
     {
         rb.linearVelocity = Vector3.zero;
+        particle.Play();
         lifeRoutine = StartCoroutine(LifeTimer());
     }
 
@@ -38,6 +39,13 @@ public class BulletBehavior : MonoBehaviour
     void OnCollisionEnter(Collision other)
     {
         particle.transform.position = this.transform.position;
+        particle.Play();
+
+        if (other.gameObject.tag == "Enemy")
+        {
+            EnemyHealth enemyHealth = other.gameObject.GetComponent<EnemyHealth>();
+            enemyHealth.DealDamage(25f);
+        }
         this.gameObject.SetActive(false);
     }
 }

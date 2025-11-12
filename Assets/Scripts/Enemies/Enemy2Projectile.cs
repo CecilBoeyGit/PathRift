@@ -74,6 +74,8 @@ public class Enemy2Projectile : MonoBehaviour
                     {
                         float dist = Vector3.Distance(transform.position, hit.transform.position);
                         float damage = CalculateFalloffDamage(dist);
+                        PlayerHealth playerHealth = hit.gameObject.GetComponent<PlayerHealth>();
+                        playerHealth.DealDamage(12f);
                         Debug.Log($"Player hit by explosion! Damage: {damage:F1}");
                         // TODO: Apply damage to player here
                     }
