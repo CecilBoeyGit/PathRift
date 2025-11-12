@@ -26,7 +26,7 @@ public class RaycastDepth : MonoBehaviour
 
     }
 
-    public void TryPlace(RectTransform rect, Camera _centerCam)
+    public Vector3 TryPlace(RectTransform rect, Camera _centerCam)
     {
         Vector3 rectOrigin = rect.TransformPoint(rect.rect.center);
         var Ray = new Ray(rectOrigin, _centerCam.transform.forward);
@@ -34,11 +34,11 @@ public class RaycastDepth : MonoBehaviour
 
         if (raycastManager.Raycast(Ray, out var hit))
         {
-            _debugCube.transform.position = hit.point;
+            return hit.point;
         }
         else
         {
-            _debugCube.transform.position = Ray.origin;
+            return Ray.origin;
         }
     }
 

@@ -5,38 +5,72 @@ using UnityEngine;
 
 public class ObjectPoolingUniversal : MonoBehaviour
 {
-    [SerializeField]
-    private GameObject _PooledObjectPrefab;
+    [Header("Pool Setup")]
+    [SerializeField] private GameObject prefab;
+    [SerializeField] private int initialCapacity = 20;
+    [SerializeField] private bool allowExpand = true;
+    [SerializeField] private Transform storageParent;
 
-    private List<int> _openIndices = new List<int>();
-    private List<GameObject> _PooledObjects = new List<GameObject>();
+    private readonly Queue<Transform> _pool = new Queue<Transform>();
+    private bool _initialized;
 
-    public void CreateRect(Vector3 worldPos)
+    void Awake()
     {
-        if (_openIndices.Count == 0)
-        {
-            var newObj = Instantiate(_PooledObjectPrefab, parent: this.transform);
-
-            _PooledObjects.Add(newObj);
-            _openIndices.Add(_PooledObjects.Count - 1);
-        }
-
-        // Treat the first index as a queue
-        int index = _openIndices[0];
-        _openIndices.RemoveAt(0);
-
-        GameObject rectangle = _PooledObjects[index];
-        rectangle.gameObject.transform.position = worldPos;
-        rectangle.gameObject.SetActive(true);
+        Prewarm();
     }
 
-    public void ClearRects()
+    public void Prewarm()
     {
-        for (var i = 0; i < _PooledObjects.Count; i++)
+        if (_initialized || prefab == null) return;
+        _initialized = true;
+
+        if (storageParent == null)
         {
-            _PooledObjects[i].gameObject.SetActive(false);
-            _openIndices.Add(i);
+            storageParent = transform;
         }
+
+        for (int i = 0; i < initialCapacity; i++)
+        {
+            var t = CreateInstance();
+            t.SetParent(storageParent, false);
+            Return(t);
+        }
+    }
+
+    private Transform CreateInstance()
+    {
+        var go = Instantiate(prefab);
+        return go.transform;
+    }
+
+    /// Spawn a pooled object at a world position (identity rotation).
+    public Transform SpawnAt(Vector3 worldPos)
+    {
+        return SetPoolObject(worldPos, Quaternion.identity);
+    }
+
+    /// Spawn at position/rotation, optionally under a parent (keeps world transform).
+    public Transform SetPoolObject(Vector3 worldPos, Quaternion worldRot)
+    {
+        if (!_initialized) Prewarm();
+
+        Transform t = _pool.Count > 0 ? _pool.Dequeue() :
+                      allowExpand ? CreateInstance() : null;
+
+        if (t == null) return null;
+
+        t.position = worldPos;
+        t.rotation = worldRot;
+        t.gameObject.SetActive(true);
+        return t;
+    }
+
+    /// Return an instance to the pool.
+    public void Return(Transform t)
+    {
+        if (t == null) return;
+        t.gameObject.SetActive(false);
+        _pool.Enqueue(t);
     }
 }
 

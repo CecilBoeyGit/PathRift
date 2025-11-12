@@ -187,7 +187,7 @@ GameObject:
   - component: {fileID: 105502434}
   - component: {fileID: 105502435}
   m_Layer: 0
-  m_Name: DebugCubes
+  m_Name: Enemies01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -220,7 +220,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f80ac5519f399404e9f72daef5ad7fa7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _PooledObjectPrefab: {fileID: 7060259466622604383, guid: 65d8405b612df7442927294f223a628b, type: 3}
+  prefab: {fileID: 7060259466622604383, guid: 65d8405b612df7442927294f223a628b, type: 3}
+  initialCapacity: 20
+  allowExpand: 1
+  storageParent: {fileID: 0}
 --- !u!1001 &147740944
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -450,7 +453,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &214899156
 RectTransform:
   m_ObjectHideFlags: 0
@@ -694,7 +697,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1064482288}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &966906179
+--- !u!1 &945883069
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -702,45 +705,46 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 966906181}
-  - component: {fileID: 966906180}
+  - component: {fileID: 945883070}
+  - component: {fileID: 945883071}
   m_Layer: 0
-  m_Name: DepthDetect
+  m_Name: Enemies02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!114 &966906180
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 966906179}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 22b357ced1866cb4eabc828ac0269050, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _occlusionManager: {fileID: 1402270273}
-  _drawRect: {fileID: 2129235794}
-  _DebugText: {fileID: 214899157}
---- !u!4 &966906181
+  m_IsActive: 1
+--- !u!4 &945883070
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 966906179}
+  m_GameObject: {fileID: 945883069}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.9887202, y: -4.0505605, z: 13.708489}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1808022460}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &945883071
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 945883069}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f80ac5519f399404e9f72daef5ad7fa7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  prefab: {fileID: 7060259466622604383, guid: 9b1653d0745d8bf4895ab397c71b1f4f, type: 3}
+  initialCapacity: 20
+  allowExpand: 1
+  storageParent: {fileID: 0}
 --- !u!1 &970894627
 GameObject:
   m_ObjectHideFlags: 0
@@ -1023,7 +1027,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _depthRaycast: {fileID: 970894629}
-  _enemiesObjectPool: {fileID: 105502435}
+  pools:
+  - {fileID: 105502435}
+  - {fileID: 945883071}
+  StationaryCategories:
+  - Bench
+  - TrafficLight
+  - Sign
+  movingKeepDistance: 3
+  stationarySpawnDistance: 2
   _drawRect: {fileID: 2129235794}
   _drawRectOriginal: {fileID: 2129235796}
   _centerCam: {fileID: 1402270272}
@@ -2315,6 +2327,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 105502434}
+  - {fileID: 945883070}
   - {fileID: 415116968}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -2628,6 +2641,5 @@ SceneRoots:
   - {fileID: 1626836293}
   - {fileID: 147740944}
   - {fileID: 1127894815}
-  - {fileID: 966906181}
   - {fileID: 1808022460}
   - {fileID: 970894630}
