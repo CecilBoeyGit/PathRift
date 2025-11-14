@@ -44,7 +44,8 @@ public class OrbsHandControl : MonoBehaviour
     [Header("Event")]
     public UnityEvent onConditionMet;
 
-    private Vector3 lastPosition;
+    //private Vector3 lastPosition;
+    private Vector3 lastLocalHandPos;
     private float timeAboveThreshold = 0f;
     private bool trackingMovement = false;
     private float startDistanceToCenterEye = 0f;
@@ -60,7 +61,7 @@ public class OrbsHandControl : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        lastPosition = Vector3.zero;
+        //lastPosition = Vector3.zero;
         shield.SetActive(false);
         bulletPool = new List<GameObject>();
         for (int i = 0; i < bulletPoolSize; i++)
@@ -241,12 +242,12 @@ public class OrbsHandControl : MonoBehaviour
         if (activeOrbs.Count < 1)
             return;
 
-        // Calculate velocity magnitude
-        float velocity = (transform.position - lastPosition).magnitude / Time.deltaTime;
+        // Position in head space (local to centerEye)
+        Vector3 currentLocalHandPos = centerEye.InverseTransformPoint(transform.position);
+        float velocity = (currentLocalHandPos - lastLocalHandPos).magnitude / Time.deltaTime;
 
         if (velocity > speedThreshold)
         {
-            // Start tracking if this is the first frame above threshold
             if (!trackingMovement)
             {
                 trackingMovement = true;
@@ -256,7 +257,6 @@ public class OrbsHandControl : MonoBehaviour
 
             timeAboveThreshold += Time.deltaTime;
 
-            // If maintained high speed for enough time
             if (timeAboveThreshold >= durationThreshold)
             {
                 float endDistance = Vector3.Distance(transform.position, centerEye.position);
@@ -279,7 +279,8 @@ public class OrbsHandControl : MonoBehaviour
 
                         activeOrbs.Clear();
                         trackingMovement = false;
-                        lastThrowTime = Time.time; // ✅ start cooldown timer
+                        lastThrowTime = Time.time;
+                        lastLocalHandPos = currentLocalHandPos;
                         return;
                     }
 
@@ -295,7 +296,8 @@ public class OrbsHandControl : MonoBehaviour
 
                         activeOrbs.Clear();
                         trackingMovement = false;
-                        lastThrowTime = Time.time; // ✅ start cooldown timer
+                        lastThrowTime = Time.time;
+                        lastLocalHandPos = currentLocalHandPos;
                         return;
                     }
                 }
@@ -303,13 +305,14 @@ public class OrbsHandControl : MonoBehaviour
         }
         else
         {
-            // Reset if speed drops below threshold
             trackingMovement = false;
             timeAboveThreshold = 0f;
         }
 
-        lastPosition = transform.position;
+        // Update at end of frame for next velocity calc
+        lastLocalHandPos = currentLocalHandPos;
     }
+
 
 
     void ShieldShootActivated()
