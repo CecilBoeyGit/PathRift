@@ -1,0 +1,55 @@
+{
+    "version": 1,
+    "name": "IA_Debug",
+    "maps": [
+        {
+            "name": "DefaultMap",
+            "id": "11b20cd1-7af7-42d2-abaa-707e5a372783",
+            "actions": [
+                {
+                    "name": "Debug_01",
+                    "type": "Button",
+                    "id": "6ccd86ba-b140-45d5-abd4-cdda17828a7c",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Debug_02",
+                    "type": "Button",
+                    "id": "59c998c0-0589-4672-a7ee-9214a455b543",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "05bfd2a8-2477-4351-ad2d-90c66d531a77",
+                    "path": "<Keyboard>/a",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Debug_01",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "6ea2f468-ca3c-4b43-af07-73c8c372fac1",
+                    "path": "<Keyboard>/d",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Debug_02",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}

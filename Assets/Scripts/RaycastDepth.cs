@@ -26,9 +26,15 @@ public class RaycastDepth : MonoBehaviour
 
     }
 
-    public Vector3 TryPlace(RectTransform rect, Camera _centerCam)
+    public Vector3 TryPlace(RectTransform rect, Transform transformWS, bool useTransformWS, Camera _centerCam)
     {
-        Vector3 rectOrigin = rect.TransformPoint(rect.rect.center);
+        Vector3 rectOrigin = Vector3.zero;
+
+        if (useTransformWS)
+            rectOrigin = transformWS.position;
+        else
+            rectOrigin = rect.TransformPoint(rect.rect.center);
+
         var Ray = new Ray(rectOrigin, _centerCam.transform.forward);
         DebugRay(Ray);
 
