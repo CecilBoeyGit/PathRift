@@ -137,7 +137,7 @@ namespace Niantic.Lightship.MetaQuest.InternalSamples
                 // Draw the bounding rect around the detected object
                 var info = $"{categoryName}: {confidence}\n";
                 _drawRect.CreateRect(screenCenter, GetOrAssignColorToCategory(categoryName), info, out RectTransform _outRectT);
-                Vector3 worldPos = _depthRaycast.TryPlace(_outRectT, _centerCam);
+                Vector3 worldPos = _depthRaycast.TryPlace(_outRectT, transform, false, _centerCam);
 
                 bool isVehicle = string.Equals(categoryName, "Vehicle", StringComparison.OrdinalIgnoreCase);
                 bool isStationaryCat = !string.Equals(categoryName, "Vehicle", StringComparison.OrdinalIgnoreCase);
