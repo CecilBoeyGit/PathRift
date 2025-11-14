@@ -7,6 +7,9 @@ TagManager:
   - Enemy
   - EnemyBullet
   - Bullet
+  - Crystal
+  - Orb
+  - Flame
   layers:
   - Default
   - TransparentFX
@@ -18,9 +21,9 @@ TagManager:
   - Enemy Bullet
   - Bullet
   - Player
-  - 
-  - 
-  - 
+  - Crystal
+  - Orb
+  - Flame
   - 
   - 
   - 

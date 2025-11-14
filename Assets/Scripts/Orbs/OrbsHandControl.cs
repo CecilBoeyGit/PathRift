@@ -265,6 +265,7 @@ public class OrbsHandControl : MonoBehaviour
                 if (endDistance > startDistanceToCenterEye)
                 {
                     Transform targetToTrack = orbsController.GetTarget();
+                    int activeOrbsNum = activeOrbs.Count;
 
                     if (targetToTrack != null)
                     {
@@ -272,6 +273,7 @@ public class OrbsHandControl : MonoBehaviour
                         {
                             Orb orbScript = activeOrbs[i].GetComponent<Orb>();
                             orbScript.target = targetToTrack;
+                            orbScript.orbsLaunched = activeOrbsNum;
                             orbScript.currentState = Orb.OrbState.Attack;
                         }
 
@@ -287,6 +289,7 @@ public class OrbsHandControl : MonoBehaviour
                         {
                             Orb orbScript = activeOrbs[i].GetComponent<Orb>();
                             orbScript.hitPos = hitPoint;
+                            orbScript.orbsLaunched = activeOrbsNum;
                             orbScript.currentState = Orb.OrbState.Attack;
                         }
 
@@ -358,12 +361,26 @@ public class OrbsHandControl : MonoBehaviour
                 shootMode = true;
                 StartCoroutine(Shoot());
             }
-            
+
         }
         //Debug.Log("Shoot Mode: " + shootMode);
 
-        Vector3 offsetDir = Quaternion.AngleAxis(-36f, handSideAxis) * handForwardAxis;
-        // hoverPivot.position = transform.position + offsetDir.normalized * hoverHeight;
+        // Vector3 offsetDir = Quaternion.AngleAxis(-41f, handSideAxis) * handForwardAxis;
+        // Vector3 offsetDir2 = Quaternion.AngleAxis(-4f, handUpAxis) * handForwardAxis;
+        // // hoverPivot.position = transform.position + offsetDir.normalized * hoverHeight;
+        // hoverPivot.position = transform.position + offsetDir * offsetDir2 * hoverHeight;
+
+        float sideRotationValue = 4;
+        if (!rightHand)
+        {
+            sideRotationValue *= -1;
+        }
+        Quaternion combinedRotation =
+        Quaternion.AngleAxis(sideRotationValue, handUpAxis) *
+        Quaternion.AngleAxis(-38f, handSideAxis);
+
+        Vector3 offsetDir = combinedRotation * handForwardAxis;
+
         hoverPivot.position = transform.position + offsetDir * hoverHeight;
 
 

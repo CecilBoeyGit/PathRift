@@ -4854,9 +4854,9 @@ GameObject:
   - component: {fileID: 7639858287853817202}
   - component: {fileID: 504543680281966596}
   - component: {fileID: 7507552783889991649}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Orb
-  m_TagString: Untagged
+  m_TagString: Orb
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4918,8 +4918,7 @@ MonoBehaviour:
   - {fileID: 6707832744601458836}
   - {fileID: 1255800194819541650}
   orbsController: {fileID: 0}
-  delayTime: 0
-  swordDelay: 0
+  orbsLaunched: 0
   speed: 8
   currentState: 0
   targetTransform: {fileID: 0}

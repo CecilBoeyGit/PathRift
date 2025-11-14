@@ -26,6 +26,8 @@ public class OrbsController : MonoBehaviour
 
     public GameObject crystal;
     [HideInInspector] public List<GameObject> crystalsPool = new List<GameObject>();
+    public GameObject flamePrefab;
+    [HideInInspector] public List<GameObject> flamePool = new List<GameObject>();
 
     // =====================================================
     // ✈️ LOCK-ON HUD SECTION
@@ -37,8 +39,12 @@ public class OrbsController : MonoBehaviour
     public GameObject hitPosIndicator;   // 3D object that hovers at hit position
     public float lockOnDistance = 5f;    // How far in front of playerHead the canvas should appear
 
+    public Color orange, blue;
+
     private Vector3 currentHitPos = Vector3.zero;
     private Camera mainCam;
+
+    LayerMask ignoreMask;
 
     // =====================================================
 
@@ -46,10 +52,20 @@ public class OrbsController : MonoBehaviour
     {
         SetUpOrbs();
         SetUpCrystalsPool();
+        SetUpFlamePool();
 
         mainCam = Camera.main;
         if (lockOnCanvas) lockOnCanvas.enabled = false;
         if (hitPosIndicator) hitPosIndicator.SetActive(false);
+
+        ignoreMask = ~(
+        (1 << LayerMask.NameToLayer("Orb"))
+        | (1 << LayerMask.NameToLayer("Flame"))
+        | (1 << LayerMask.NameToLayer("Crystal"))
+        | (1 << LayerMask.NameToLayer("Player"))
+        | (1 << LayerMask.NameToLayer("Bullet"))
+        | (1 << LayerMask.NameToLayer("EnemyBullet"))
+        );
     }
 
     void Update()
@@ -86,6 +102,16 @@ public class OrbsController : MonoBehaviour
             GameObject crystalPrefab = Instantiate(crystal);
             crystalPrefab.SetActive(false);
             crystalsPool.Add(crystalPrefab);
+        }
+    }
+
+    void SetUpFlamePool()
+    {
+        for (int i = 0; i < 20; i++)
+        {
+            GameObject f = Instantiate(flamePrefab);
+            f.SetActive(false);
+            flamePool.Add(f);
         }
     }
 
@@ -167,10 +193,88 @@ public class OrbsController : MonoBehaviour
     public Vector3 RaycastForward()
     {
         Ray ray = new Ray(playerHead.position, playerHead.forward);
-        if (Physics.Raycast(ray, out RaycastHit hit, 10f, hitMask))
+        if (Physics.Raycast(ray, out RaycastHit hit, 10f, ignoreMask))
             return hit.point;
 
         return Vector3.zero;
+    }
+
+    public void FireMode()
+    {
+        var lockOnImg = lockOnIcon.GetComponent<UnityEngine.UI.Image>();
+        lockOnImg.color = orange;
+        var circleImg = circleUI.GetComponent<UnityEngine.UI.Image>();
+        circleImg.color = orange;
+        MeshRenderer rend = hitPosIndicator.GetComponent<MeshRenderer>();
+        rend.material.SetColor("_BaseColor", orange);
+
+        if (leftHand.activeOrbs.Count > 0)
+        {
+            foreach (Transform orb in leftHand.activeOrbs)
+            {
+                Orb orbScript = orb.GetComponent<Orb>();
+                orbScript.ChangeParticle(0);
+                orbScript.elementState = 0;
+            }
+        }
+        if (rightHand.activeOrbs.Count > 0)
+        {
+            foreach (Transform orb in rightHand.activeOrbs)
+            {
+                Orb orbScript = orb.GetComponent<Orb>();
+                orbScript.ChangeParticle(0);
+                orbScript.elementState = 0;
+            }
+        }
+
+        if (orbPool.Count > 0)
+        {
+            foreach (Transform orb in orbPool)
+            {
+                Orb orbScript = orb.GetComponent<Orb>();
+                orbScript.ChangeParticle(0);
+                orbScript.elementState = 0;
+            }
+        }
+    }
+
+    public void IceMode()
+    {
+        var lockOnImg = lockOnIcon.GetComponent<UnityEngine.UI.Image>();
+        lockOnImg.color = blue;
+        var circleImg = circleUI.GetComponent<UnityEngine.UI.Image>();
+        circleImg.color = blue;
+        MeshRenderer rend = hitPosIndicator.GetComponent<MeshRenderer>();
+        rend.material.SetColor("_BaseColor", blue);
+
+        if (leftHand.activeOrbs.Count > 0)
+        {
+            foreach (Transform orb in leftHand.activeOrbs)
+            {
+                Orb orbScript = orb.GetComponent<Orb>();
+                orbScript.ChangeParticle(1);
+                orbScript.elementState = 1;
+            }
+        }
+        if (rightHand.activeOrbs.Count > 0)
+        {
+            foreach (Transform orb in rightHand.activeOrbs)
+            {
+                Orb orbScript = orb.GetComponent<Orb>();
+                orbScript.ChangeParticle(1);
+                orbScript.elementState = 1;
+            }
+        }
+
+        if (orbPool.Count > 0)
+        {
+            foreach (Transform orb in orbPool)
+            {
+                Orb orbScript = orb.GetComponent<Orb>();
+                orbScript.ChangeParticle(1);
+                orbScript.elementState = 1;
+            }
+        }
     }
 
     // =====================================================
