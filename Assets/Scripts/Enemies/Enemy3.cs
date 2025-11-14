@@ -5,9 +5,9 @@ using System.Collections;
 public class Enemy3 : MonoBehaviour
 {
     [Header("References")]
-    public Transform laserOrigin;     // The point the laser starts from
-    public Transform bodyPivot;       // Optional: rotates horizontally to face player
-    public ParticleSystem laserImpact; // Optional impact effect on hit point
+    public Transform laserOrigin;     // Where the laser starts
+    public Transform bodyPivot;       // Rotates horizontally toward player
+    public ParticleSystem laserImpact; // Optional impact VFX
 
     [Header("Laser Settings")]
     public float laserDurationMin = 5f;
@@ -15,33 +15,27 @@ public class Enemy3 : MonoBehaviour
     public float cooldownMin = 4f;
     public float cooldownMax = 6f;
     public float maxLaserDistance = 50f;
+    public float laserYoffsetMax = 0.08f;
+    float currentLaserYOffset;
 
-    [Tooltip("Damage per second to the player while hit by laser.")]
+    [Tooltip("Damage per second the laser applies to the player.")]
     public float laserDPS = 15f;
 
     [Header("Rotation Settings")]
     public float rotationSpeed = 3f;
 
-    [Header("Health Settings")]
-    public float maxHealth = 100f;
-    private float currentHealth;
-
-    // --- stun and dmg state ---
-    private bool isStunned = false;
-
     // internal
     private Transform player;
     private LineRenderer lineRenderer;
     private Coroutine laserRoutine;
+    private bool isStunned = false;
 
     void Start()
     {
         lineRenderer = GetComponent<LineRenderer>();
         lineRenderer.enabled = false;
-        currentHealth = maxHealth;
 
-        GameObject p = GameObject.FindGameObjectWithTag("Player");
-        if (p != null) player = p.transform;
+        player = GameObject.FindGameObjectWithTag("Player").transform;
 
         if (!isStunned)
             laserRoutine = StartCoroutine(LaserLoop());
@@ -51,52 +45,57 @@ public class Enemy3 : MonoBehaviour
     {
         if (player == null) return;
 
-        // Rotate to face player horizontally
-        if (bodyPivot != null && !isStunned)
-        {
-            Vector3 dir = player.position - bodyPivot.position;
-            dir.y = 0f;
-            if (dir.sqrMagnitude > 0.01f)
-            {
-                Quaternion targetRot = Quaternion.LookRotation(dir);
-                bodyPivot.rotation = Quaternion.Slerp(bodyPivot.rotation, targetRot, Time.deltaTime * rotationSpeed);
-            }
-        }
+        if (!isStunned)
+            RotateTowardsPlayer();
 
-        // Keep drawing the beam while active
         if (lineRenderer.enabled && !isStunned)
+            FireLaser(); // continuously update laser while firing
+    }
+
+    // -----------------------------------------------------
+    // Rotation logic
+    // -----------------------------------------------------
+    void RotateTowardsPlayer()
+    {
+        if (bodyPivot == null) return;
+
+        Vector3 dir = (player.position - new Vector3(0, 0.35f, 0)) - bodyPivot.position;
+        dir.y = 0f; // horizontal-only rotation
+
+        if (dir.sqrMagnitude > 0.01f)
         {
-            FireLaser();
+            Quaternion target = Quaternion.LookRotation(dir);
+            bodyPivot.rotation = Quaternion.Slerp(bodyPivot.rotation, target, Time.deltaTime * rotationSpeed);
         }
     }
 
     // -----------------------------------------------------
-    // Laser loop logic (fire -> cooldown -> repeat)
+    // Laser Loop (fire → cooldown → repeat)
     // -----------------------------------------------------
     IEnumerator LaserLoop()
     {
         while (true)
         {
-            // Wait before firing
+            // cooldown before firing
             yield return new WaitForSeconds(Random.Range(cooldownMin, cooldownMax));
             if (isStunned) continue;
 
-            // Fire laser
-            float laserDuration = Random.Range(laserDurationMin, laserDurationMax);
+            // Start firing
             lineRenderer.enabled = true;
-            float timer = 0f;
+            float fireTime = Random.Range(laserDurationMin, laserDurationMax);
+            currentLaserYOffset = Random.Range(-laserYoffsetMax, laserYoffsetMax);
 
-            while (timer < laserDuration && !isStunned)
+            float timer = 0f;
+            while (timer < fireTime && !isStunned)
             {
                 FireLaser();
                 timer += Time.deltaTime;
                 yield return null;
             }
 
-            // Stop firing
+            // stop laser
             lineRenderer.enabled = false;
-            if (laserImpact != null && laserImpact.isPlaying)
-                laserImpact.Stop();
+            if (laserImpact != null) laserImpact.Stop();
         }
     }
 
@@ -105,40 +104,39 @@ public class Enemy3 : MonoBehaviour
     // -----------------------------------------------------
     void FireLaser()
     {
-        if (laserOrigin == null || player == null) return;
+        if (laserOrigin == null || player == null)
+            return;
 
         Vector3 origin = laserOrigin.position;
-        Vector3 direction = (player.position - origin).normalized;
+        Vector3 direction = ((player.position - new Vector3(0, 0.35f, 0)) - origin).normalized;
 
-        // Perform raycast
-        RaycastHit hit;
-        if (Physics.Raycast(origin, direction, out hit, maxLaserDistance))
+        // Raycast
+        if (Physics.Raycast(origin, direction, out RaycastHit hit, maxLaserDistance))
         {
-            // Draw beam
             lineRenderer.SetPosition(0, origin);
             lineRenderer.SetPosition(1, hit.point);
 
-            // Impact VFX
+            // Impact effect
             if (laserImpact != null)
             {
                 laserImpact.transform.position = hit.point;
                 if (!laserImpact.isPlaying) laserImpact.Play();
             }
 
-            // Deal damage if player hit
+            // Deal damage if we hit player
             if (hit.collider.CompareTag("Player"))
             {
-                PlayerHealth playerHealth = hit.collider.GetComponent<PlayerHealth>();
-                if (playerHealth != null)
+                PlayerHealth health = hit.collider.GetComponent<PlayerHealth>();
+                if (health != null)
                 {
-                    // Continuous beam damage: compound across multiple lasers
-                    playerHealth.DealLaserDamage(laserDPS * Time.deltaTime);
+                    // Continuous beam damage — *compounds* from multiple Enemy3
+                    health.DealLaserDamage(laserDPS * Time.deltaTime);
                 }
             }
         }
         else
         {
-            // No hit - draw to max distance
+            // Laser hit nothing
             lineRenderer.SetPosition(0, origin);
             lineRenderer.SetPosition(1, origin + direction * maxLaserDistance);
 
@@ -148,52 +146,34 @@ public class Enemy3 : MonoBehaviour
     }
 
     // -----------------------------------------------------
-    // UnityEvent Hook Functions for Stun / Damage
+    // STUN EVENT HOOKS (these are assigned via EnemyHealth)
     // -----------------------------------------------------
     public void OnStunned()
     {
         if (isStunned) return;
+
         isStunned = true;
 
-        // Stop laser visuals and damage
         if (laserRoutine != null)
             StopCoroutine(laserRoutine);
+
+        // stop laser visuals and damage
         lineRenderer.enabled = false;
         if (laserImpact != null) laserImpact.Stop();
 
-        Debug.Log($"{name} stunned — laser disabled");
+        Debug.Log($"{name}: Stunned — laser disabled");
     }
 
     public void OnUnstunned()
     {
         if (!isStunned) return;
+
         isStunned = false;
 
-        // Resume attack loop
+        // resume laser loop
         if (laserRoutine == null)
             laserRoutine = StartCoroutine(LaserLoop());
 
-        Debug.Log($"{name} recovered from stun — laser active again");
-    }
-
-    public void DealDamage(float amount)
-    {
-        if (amount <= 0f) return;
-
-        currentHealth -= amount;
-        if (currentHealth <= 0f)
-        {
-            currentHealth = 0f;
-            Die();
-        }
-    }
-
-    void Die()
-    {
-        Debug.Log($"{name} destroyed");
-        StopAllCoroutines();
-        lineRenderer.enabled = false;
-        if (laserImpact != null) laserImpact.Stop();
-        gameObject.SetActive(false);
+        Debug.Log($"{name}: Recovered from stun — laser re-enabled");
     }
 }

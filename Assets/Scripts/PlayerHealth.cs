@@ -113,7 +113,8 @@ public class PlayerHealth : MonoBehaviour
 
     public void DealLaserDamage(float dmgAmount)
     {
-        
+        currentHealth -= dmgAmount;
+        UpdateHealthUI();
     }
 
     public void Heal(float amount)

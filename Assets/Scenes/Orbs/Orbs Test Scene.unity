@@ -1630,6 +1630,7 @@ MonoBehaviour:
   enemyPrefabs:
   - {fileID: 9083990421814974794, guid: 25601b00790a33f4f908bba1d79a72d0, type: 3}
   - {fileID: 1006079442133545062, guid: e1aee0b7b65092b4faf9d3f9287a3785, type: 3}
+  - {fileID: 2319878817345436782, guid: 0eb9820dd206d1e459c86f73c268fe93, type: 3}
   enemyTag: Enemy
   rangeX: 12
   rangeZ: 6
@@ -8086,6 +8087,7 @@ MonoBehaviour:
   onPlayerDied:
     m_PersistentCalls:
       m_Calls: []
+  healRate: 6
 --- !u!1 &1604789255
 GameObject:
   m_ObjectHideFlags: 0
