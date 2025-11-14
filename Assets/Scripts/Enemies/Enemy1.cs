@@ -27,24 +27,27 @@ public class Enemy1 : MonoBehaviour
     private List<GameObject> bulletPool;
     private int poolIndex = 0;
 
+    // --- stun handling ---
+    public ParticleSystem stunParticle;
+    private bool isStunned = false;
+
     void Start()
     {
         InitializePool();
-        ChangeState(EnemyState.Aiming);
         player = GameObject.FindGameObjectWithTag("Player").transform;
+        ChangeState(EnemyState.Aiming);
     }
 
     void Update()
     {
+        if (isStunned) return; // skip AI logic while stunned
+
         switch (currentState)
         {
             case EnemyState.Idle:
                 break;
 
             case EnemyState.Aiming:
-                AimAtPlayer();
-                break;
-
             case EnemyState.Shooting:
                 AimAtPlayer();
                 break;
@@ -84,19 +87,16 @@ public class Enemy1 : MonoBehaviour
         if (currentState == newState) return;
         currentState = newState;
 
+        if (shootRoutine != null)
+            StopCoroutine(shootRoutine);
+
         switch (newState)
         {
-            case EnemyState.Idle:
-                if (shootRoutine != null) StopCoroutine(shootRoutine);
-                break;
-
             case EnemyState.Aiming:
-                if (shootRoutine != null) StopCoroutine(shootRoutine);
                 shootRoutine = StartCoroutine(ShootTimer());
                 break;
 
             case EnemyState.Shooting:
-                if (shootRoutine != null) StopCoroutine(shootRoutine);
                 shootRoutine = StartCoroutine(ShootBurst());
                 break;
         }
@@ -105,7 +105,7 @@ public class Enemy1 : MonoBehaviour
     IEnumerator ShootTimer()
     {
         yield return new WaitForSeconds(Random.Range(minShootDelay, maxShootDelay));
-        ChangeState(EnemyState.Shooting);
+        if (!isStunned) ChangeState(EnemyState.Shooting);
     }
 
     IEnumerator ShootBurst()
@@ -114,6 +114,7 @@ public class Enemy1 : MonoBehaviour
 
         for (int i = 0; i < burstCount; i++)
         {
+            if (isStunned) yield break;
             Shoot();
             yield return new WaitForSeconds(fireRate);
         }
@@ -136,12 +137,36 @@ public class Enemy1 : MonoBehaviour
             rb.linearVelocity = firePoint.forward * bulletSpeed;
         }
 
-        StartCoroutine(DisableAfterSeconds(bullet, 5f)); // Auto-disable bullet after 5s
+        StartCoroutine(DisableAfterSeconds(bullet, 5f));
     }
 
     IEnumerator DisableAfterSeconds(GameObject bullet, float delay)
     {
         yield return new WaitForSeconds(delay);
         if (bullet) bullet.SetActive(false);
+    }
+
+    // --------------------------------------------------------------------
+    // UNITY EVENT HOOKS (plug into EnemyHealth events)
+    // --------------------------------------------------------------------
+    public void OnStunned()
+    {
+        if (isStunned) return;
+        isStunned = true;
+        if (shootRoutine != null)
+            StopCoroutine(shootRoutine);
+
+        stunParticle.Play();
+        ChangeState(EnemyState.Idle);
+        Debug.Log($"{name} stunned — attack disabled");
+    }
+
+    public void OnUnstunned()
+    {
+        if (!isStunned) return;
+        isStunned = false;
+        stunParticle.Stop();
+        ChangeState(EnemyState.Aiming);
+        Debug.Log($"{name} recovered from stun — attack resumed");
     }
 }

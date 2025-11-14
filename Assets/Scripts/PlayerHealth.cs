@@ -1,33 +1,37 @@
 using UnityEngine;
 using UnityEngine.Events;
 using TMPro;
+using System.Collections.Generic;
 
 public class PlayerHealth : MonoBehaviour
 {
     [Header("Health Settings")]
     public float maxHealth = 100f;
-    [HideInInspector] public float currentHealth;
+    public float currentHealth;
 
     [Header("Player References")]
-    [Tooltip("The player's head transform (e.g., VR headset or camera).")]
     public Transform playerHead;
 
     [Header("UI References")]
-    [Tooltip("Pivot point for UI rotation around player.")]
     public Transform uiPivot;
-    [Tooltip("Canvas object that displays the player's health.")]
     public Canvas healthCanvas;
-    [Tooltip("Text element (TMP) inside the canvas showing HP.")]
     public TextMeshProUGUI healthText;
 
     [Header("UI Settings")]
-    public float uiDistance = 1.0f;       // Distance forward from pivot along head direction
-    public float pivotYOffset = -0.3f;    // Pivot offset below player's position
-    public float orbitSpeed = 0f;         // Optional slow orbit in degrees/sec
+    public float uiDistance = 1.0f;
+    public float pivotYOffset = -0.3f;
+    public float orbitSpeed = 0f;
 
     [Header("Events")]
     public UnityEvent<float, float> onHealthChanged;
     public UnityEvent onPlayerDied;
+
+    // -------------------------------
+    // Healing from Flames
+    // -------------------------------
+    private readonly HashSet<GameObject> activeFlames = new HashSet<GameObject>();
+    public float healRate = 2f;   // HP per second heal from flames
+    private bool isHealing = false;
 
     void Awake()
     {
@@ -40,10 +44,58 @@ public class PlayerHealth : MonoBehaviour
     {
         UpdateUIPivotPosition();
         RotateUIPivot();
+        UpdateHealing();
     }
 
     // ------------------------------------------------------------
-    // Health management
+    // Healing system
+    // ------------------------------------------------------------
+    private void UpdateHealing()
+    {
+        // First, remove flames that were pooled or disabled
+        activeFlames.RemoveWhere(f => f == null || !f.activeInHierarchy);
+
+        // Check if any flames still touching
+        isHealing = activeFlames.Count > 0;
+
+        // Apply healing while in flame contact
+        if (isHealing)
+        {
+            Heal(healRate * Time.deltaTime);
+        }
+    }
+
+    void OnCollisionEnter(Collision col)
+    {
+        if (col.collider.CompareTag("Flame"))
+        {
+            GameObject flame = col.collider.gameObject;
+
+            // Add only once
+            if (!activeFlames.Contains(flame))
+                activeFlames.Add(flame);
+
+            isHealing = true;
+        }
+    }
+
+    void OnCollisionExit(Collision col)
+    {
+        if (col.collider.CompareTag("Flame"))
+        {
+            GameObject flame = col.collider.gameObject;
+
+            // Remove safely
+            activeFlames.Remove(flame);
+
+            // If no flames remain → stop healing
+            if (activeFlames.Count == 0)
+                isHealing = false;
+        }
+    }
+
+    // ------------------------------------------------------------
+    // Damage / Heal / UI (unchanged)
     // ------------------------------------------------------------
     public void DealDamage(float damage)
     {
@@ -56,9 +108,13 @@ public class PlayerHealth : MonoBehaviour
         UpdateHealthUI();
 
         if (currentHealth <= 0f)
-        {
             Die();
-        }
+    }
+
+    public void DealLaserDamage(float dmgAmount)
+    {
+        currentHealth -= dmgAmount;
+        UpdateHealthUI();
     }
 
     public void Heal(float amount)
@@ -76,29 +132,25 @@ public class PlayerHealth : MonoBehaviour
     {
         Debug.Log("Player has died.");
         onPlayerDied.Invoke();
-        // TODO: Add player death/respawn handling here
     }
 
     // ------------------------------------------------------------
-    // UI logic
+    // UI logic (unchanged)
     // ------------------------------------------------------------
     void UpdateUIPivotPosition()
     {
         if (uiPivot == null || playerHead == null) return;
 
-        // Maintain pivot below player’s head horizontally
         Vector3 headPos = playerHead.position;
         uiPivot.position = new Vector3(headPos.x, headPos.y + pivotYOffset, headPos.z);
 
-        // Position canvas in front of pivot, facing same direction as player head
         if (healthCanvas != null)
         {
             Transform canvasTransform = healthCanvas.transform;
             Vector3 forwardDir = playerHead.forward;
             Vector3 targetPos = uiPivot.position + forwardDir * uiDistance;
-            canvasTransform.position = targetPos;
 
-            // Make the canvas always face the same direction as the player's head
+            canvasTransform.position = targetPos;
             canvasTransform.rotation = Quaternion.LookRotation(forwardDir, Vector3.up);
         }
     }
@@ -107,11 +159,8 @@ public class PlayerHealth : MonoBehaviour
     {
         if (uiPivot == null) return;
 
-        // Optional orbit motion around the player’s head
         if (orbitSpeed != 0f)
-        {
             uiPivot.RotateAround(playerHead.position, Vector3.up, orbitSpeed * Time.deltaTime);
-        }
     }
 
     void UpdateHealthUI()

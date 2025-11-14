@@ -1,42 +1,54 @@
 using System.Collections;
 using UnityEngine;
 
-public class CrystalBehavior : MonoBehaviour
+public class FlameBehavior : MonoBehaviour
 {
     private Vector3 targetScale;
     private Coroutine activeRoutine;
     public ParticleSystem particle;
-    private float stunMultiplier = 1f;
+    private float dmgMultiplier = 1f;
 
     void OnEnable()
     {
-        // Start the full grow/disable sequence
+        // Stop previous coroutine if pooled
         if (activeRoutine != null)
             StopCoroutine(activeRoutine);
 
         if (particle)
             particle.Play();
 
-        // Always start from zero for smooth growth
+        // Start small for growth animation
         transform.localScale = Vector3.zero;
+
         activeRoutine = StartCoroutine(GrowAndAutoDisable());
     }
 
-    // --- Public setter for external scripts ---
+    // ---- Public API ----
     public void SetTargetScale(Vector3 newScale)
     {
         targetScale = newScale;
     }
 
+    public void SetDamageMult(float dmgMult)
+    {
+        dmgMultiplier = dmgMult;
+    }
+
+    // ---- Growth + Lifetime + Shrink ----
     private IEnumerator GrowAndAutoDisable()
     {
+        yield return null;
+        // Grow from 0 → targetScale
         yield return StartCoroutine(GrowToFullSize());
 
+        // Stay active for a random amount of time
         float waitTime = Random.Range(8f, 10f);
         yield return new WaitForSeconds(waitTime);
 
+        // Shrink from targetScale → 0
         yield return StartCoroutine(ShrinkToZero());
 
+        // Reset for pooling
         transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.identity;
         gameObject.SetActive(false);
@@ -55,14 +67,16 @@ public class CrystalBehavior : MonoBehaviour
             elapsed += Time.deltaTime;
             yield return null;
         }
+
         transform.localScale = targetScale;
     }
 
     private IEnumerator ShrinkToZero()
     {
-        Vector3 startScale = transform.localScale;
+        particle.Stop();
         float duration = 0.5f;
         float elapsed = 0f;
+        Vector3 startScale = transform.localScale;
 
         while (elapsed < duration)
         {
@@ -71,22 +85,22 @@ public class CrystalBehavior : MonoBehaviour
             elapsed += Time.deltaTime;
             yield return null;
         }
+
         transform.localScale = Vector3.zero;
     }
 
-    public void SetStunMult(float stunMult)
-    {
-        stunMultiplier = stunMult;
-    }
-
+    // ---- Damage application ----
     void OnCollisionEnter(Collision other)
     {
         if (other.gameObject.CompareTag("Enemy"))
         {
             EnemyHealth enemyHealth = other.gameObject.GetComponent<EnemyHealth>();
-            if (enemyHealth != null && enemyHealth.stunDuration <= stunMultiplier)
+
+            if (enemyHealth != null)
             {
-                enemyHealth.stunDuration = stunMultiplier;                
+                // Example: apply only if greater than previously applied dmgMultiplier
+                if (enemyHealth.dmgDuration <= dmgMultiplier)
+                    enemyHealth.dmgDuration = dmgMultiplier;
             }
         }
     }
