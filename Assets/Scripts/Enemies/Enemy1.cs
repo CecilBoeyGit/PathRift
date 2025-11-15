@@ -175,4 +175,47 @@ public class Enemy1 : MonoBehaviour
         ChangeState(EnemyState.Aiming);
         Debug.Log($"{name} recovered from stun — attack resumed");
     }
+
+    void OnEnable()
+    {
+        // Reset stun state
+        isStunned = false;
+
+        // Stop stun VFX
+        if (stunParticle != null)
+            stunParticle.Stop();
+
+        // Reset bullet pool index
+        poolIndex = 0;
+
+        // Reset state
+        currentState = EnemyState.Idle;
+
+        // Stop any leftover coroutine
+        if (shootRoutine != null)
+            StopCoroutine(shootRoutine);
+        shootRoutine = null;
+
+        // Reset rotation and player reference
+        if (player == null)
+            player = GameObject.FindGameObjectWithTag("Player").transform;
+
+        SetInitialRot();
+
+        // Restart AI
+        ChangeState(EnemyState.Aiming);
+    }
+
+    void OnDisable()
+    {
+        // Stop coroutines on disable
+        if (shootRoutine != null)
+            StopCoroutine(shootRoutine);
+        shootRoutine = null;
+
+        // Stop stun effects if active
+        if (stunParticle != null)
+            stunParticle.Stop();
+    }
+
 }

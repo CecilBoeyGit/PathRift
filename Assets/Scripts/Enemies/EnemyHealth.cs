@@ -208,6 +208,53 @@ public class EnemyHealth : MonoBehaviour
         wasDmgedPrevFrame = isDmged;
     }
 
+    void OnEnable()
+    {
+        // -----------------------
+        // RESET HEALTH
+        // -----------------------
+        currentHealth = maxHealth;
+
+        // -----------------------
+        // RESET STUN STATE
+        // -----------------------
+        isStunned = false;
+        stunTimer = 0f;
+        activeCrystals.Clear();
+        previousStunState = false; // ensures next stun triggers the event
+
+        // -----------------------
+        // RESET FLAME DAMAGE (DoT)
+        // -----------------------
+        isDmged = false;
+        dmgTimer = 0f;
+        activeFlames.Clear();
+        wasDmgedPrevFrame = false;
+
+        // -----------------------
+        // OPTIONAL: clear events from previous pooling cycle
+        // (UnityEvent listeners remain valid and should not be cleared)
+        // -----------------------
+
+        // Enemy will re-awaken in a "clean" state
+    }
+
+    void OnDisable()
+    {
+        // Cleanup timers & states
+        stunTimer = 0f;
+        dmgTimer = 0f;
+
+        // Clear active collision sets (important for pooling!)
+        activeCrystals.Clear();
+        activeFlames.Clear();
+
+        // Reset event state tracking
+        previousStunState = false;
+        wasDmgedPrevFrame = false;
+    }
+
+
 #if UNITY_EDITOR
     void OnDrawGizmosSelected()
     {

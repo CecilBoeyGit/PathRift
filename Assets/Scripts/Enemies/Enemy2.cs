@@ -211,6 +211,54 @@ public class Enemy2 : MonoBehaviour
         Debug.Log($"{name} recovered from stun — mortar active again");
     }
 
+    void OnEnable()
+    {
+        // Reset stun state
+        isStunned = false;
+
+        // Stop particles just in case
+        if (stunParticle != null)
+            stunParticle.Stop();
+
+        // Reset player velocity tracking
+        playerVelocity = Vector3.zero;
+
+        // Reset last player position
+        if (player != null)
+            lastPlayerPos = player.position;
+
+        // Stop orphaned coroutine
+        if (shootRoutine != null)
+            StopCoroutine(shootRoutine);
+        shootRoutine = null;
+
+        // Reset rotation
+        if (player == null)
+        {
+            GameObject p = GameObject.FindGameObjectWithTag("Player");
+            if (p != null)
+                player = p.transform;
+        }
+        SetInitialRot();
+
+        // Start firing loop again
+        if (!isStunned)
+            shootRoutine = StartCoroutine(ShootLoop());
+    }
+
+    void OnDisable()
+    {
+        // Stop shoot routine
+        if (shootRoutine != null)
+            StopCoroutine(shootRoutine);
+        shootRoutine = null;
+
+        // Stop stun particle if still active
+        if (stunParticle != null)
+            stunParticle.Stop();
+    }
+
+
 #if UNITY_EDITOR
     void OnDrawGizmosSelected()
     {

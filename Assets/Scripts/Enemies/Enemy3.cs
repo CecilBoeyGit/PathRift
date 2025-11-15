@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Threading;
 
 [RequireComponent(typeof(LineRenderer))]
 public class Enemy3 : MonoBehaviour
@@ -30,6 +31,9 @@ public class Enemy3 : MonoBehaviour
     private Coroutine laserRoutine;
     private bool isStunned = false;
 
+    public bool tracking = false;
+    public float trackTimer = 1;
+
     void Start()
     {
         SetInitialRot();
@@ -49,6 +53,15 @@ public class Enemy3 : MonoBehaviour
 
     void Update()
     {
+        if (!tracking)
+        {
+            trackTimer -= Time.deltaTime;
+        }
+        else
+        {
+            trackTimer = 1;
+        }
+
         if (player == null) return;
 
         if (!isStunned)
@@ -181,5 +194,53 @@ public class Enemy3 : MonoBehaviour
             laserRoutine = StartCoroutine(LaserLoop());
 
         Debug.Log($"{name}: Recovered from stun — laser re-enabled");
+    }
+
+    void OnEnable()
+    {
+        // Reset stun state
+        isStunned = false;
+
+        // Reset laser visuals
+        if (lineRenderer != null)
+            lineRenderer.enabled = false;
+
+        if (laserImpact != null)
+            laserImpact.Stop();
+
+        // Reset timers & tracking
+        trackTimer = 1f;
+        tracking = false;
+        currentLaserYOffset = 0f;
+
+        // Stop any orphan coroutine
+        if (laserRoutine != null)
+            StopCoroutine(laserRoutine);
+        laserRoutine = null;
+
+        // Reset rotation
+        if (player == null)
+            player = GameObject.FindGameObjectWithTag("Player").transform;
+
+        SetInitialRot();
+
+        // Restart attack loop
+        if (!isStunned)
+            laserRoutine = StartCoroutine(LaserLoop());
+    }
+
+    void OnDisable()
+    {
+        // Disable laser immediately when disabled
+        if (lineRenderer != null)
+            lineRenderer.enabled = false;
+
+        if (laserImpact != null)
+            laserImpact.Stop();
+
+        // Clean coroutine
+        if (laserRoutine != null)
+            StopCoroutine(laserRoutine);
+        laserRoutine = null;
     }
 }
