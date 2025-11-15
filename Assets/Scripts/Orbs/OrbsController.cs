@@ -46,6 +46,9 @@ public class OrbsController : MonoBehaviour
 
     LayerMask ignoreMask;
 
+   [SerializeField]
+    private RaycastDepth _depthRaycast;
+
     // =====================================================
 
     void Start()
@@ -190,11 +193,23 @@ public class OrbsController : MonoBehaviour
 
     public Transform GetTarget() => target;
 
+    private RectTransform emptyRect;    
+
     public Vector3 RaycastForward()
     {
-        Ray ray = new Ray(playerHead.position, playerHead.forward);
-        if (Physics.Raycast(ray, out RaycastHit hit, 10f, ignoreMask))
-            return hit.point;
+       // Ray ray = new Ray(playerHead.position, playerHead.forward);
+
+            // if (Physics.Raycast(ray, out RaycastHit hit, 10f, ignoreMask))
+            //     return hit.point;
+        if(_depthRaycast != null)
+        {
+
+            Vector3 worldPos = _depthRaycast.TryPlace(emptyRect, playerHead, true, playerHead.GetComponent<Camera>());
+            return worldPos;
+
+        }
+
+
 
         return Vector3.zero;
     }
@@ -322,7 +337,7 @@ public class OrbsController : MonoBehaviour
         bool hasHitPos = !hasTarget && currentHitPos != Vector3.zero;
 
         if (lockOnIcon) lockOnIcon.gameObject.SetActive(hasTarget);
-        if (hitPosIndicator) hitPosIndicator.SetActive(hasHitPos);
+        if (hitPosIndicator) hitPosIndicator.SetActive(hasHitPos && !lockOnIcon.gameObject.activeInHierarchy);
 
         // Lock-on icon: place along direction to target at canvas depth
         if (hasTarget && lockOnIcon)

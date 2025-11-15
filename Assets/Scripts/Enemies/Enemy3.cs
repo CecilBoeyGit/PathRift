@@ -31,7 +31,7 @@ public class Enemy3 : MonoBehaviour
     private Coroutine laserRoutine;
     private bool isStunned = false;
 
-    public bool tracking = false;
+    public bool unfollow = false;
     public float trackTimer = 1;
 
     void Start()
@@ -53,7 +53,7 @@ public class Enemy3 : MonoBehaviour
 
     void Update()
     {
-        if (!tracking)
+        if (!unfollow)
         {
             trackTimer -= Time.deltaTime;
         }
@@ -210,7 +210,7 @@ public class Enemy3 : MonoBehaviour
 
         // Reset timers & tracking
         trackTimer = 1f;
-        tracking = false;
+        unfollow = false;
         currentLaserYOffset = 0f;
 
         // Stop any orphan coroutine

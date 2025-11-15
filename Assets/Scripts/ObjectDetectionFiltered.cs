@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections;
 using System.Globalization;
 using System.Linq;
 using Niantic.Lightship.AR.ObjectDetection;
@@ -30,8 +31,8 @@ namespace Niantic.Lightship.MetaQuest.InternalSamples
         [SerializeField] private float stationarySpawnDistance = 10.0f; // spawn a new stationary marker if all existing are farther
 
         // Tracking
-        private readonly List<PooledMarker> _moving = new();
-        private readonly List<PooledMarker> _stationary = new();
+        public List<PooledMarker> _moving = new();
+        public List<PooledMarker> _stationary = new();
 
         // Temp buffers for current-frame detections
         private readonly List<Vector3> _vehicleDetections = new();
@@ -56,6 +57,14 @@ namespace Niantic.Lightship.MetaQuest.InternalSamples
 
         [SerializeField]
         private float _probabilityThreshold = 0.5f;
+
+        [SerializeField]
+        private float _bboxSizeThreshold = 6.0f;
+
+        [SerializeField]
+        private float _detectionInterval = 2.0f;
+        private float timer;
+        bool canDetect = false;
 
         // Colors to assign to each category
         private readonly Color[] _colors =
@@ -89,6 +98,31 @@ namespace Niantic.Lightship.MetaQuest.InternalSamples
         {
             _objectDetectionManager.MetadataInitialized -= ObjectDetectionManager_OnMetadataInitialized;
             _objectDetectionManager.ObjectDetectionsUpdated -= ObjectDetectionManager_ObjectDetectionsUpdated;
+        }
+
+        private bool isDelaying = false;
+
+        private void Update()
+        {
+            timer += Time.deltaTime;
+
+            // If we hit the detection interval and we're not already delaying
+            if (timer >= _detectionInterval && !isDelaying)
+            {
+                StartCoroutine(DelayBeforeReset());
+            }
+        }
+
+        private IEnumerator DelayBeforeReset()
+        {
+            isDelaying = true;
+            canDetect = true;
+
+            yield return new WaitForSeconds(1.0f); 
+
+            canDetect = false;
+            timer = 0f;
+            isDelaying = false;
         }
 
         private void ObjectDetectionManager_OnMetadataInitialized(ARObjectDetectionModelEventArgs args)
@@ -137,11 +171,21 @@ namespace Niantic.Lightship.MetaQuest.InternalSamples
                 // Draw the bounding rect around the detected object
                 var info = $"{categoryName}: {confidence}\n";
                 _drawRect.CreateRect(screenCenter, GetOrAssignColorToCategory(categoryName), info, out RectTransform _outRectT);
+                // ------------------------------------------------------------------------------------------------------------------------------------------------
+
+                // Original world position output from Raycasting against depth
+
                 Vector3 worldPos = _depthRaycast.TryPlace(_outRectT, transform, false, _centerCam);
 
-                bool isVehicle = string.Equals(categoryName, "Vehicle", StringComparison.OrdinalIgnoreCase);
-                bool isStationaryCat = !string.Equals(categoryName, "Vehicle", StringComparison.OrdinalIgnoreCase);
+                // ------------------------------------------------------------------------------------------------------------------------------------------------
+
+                bool isVehicle = string.Equals(categoryName, "Person", StringComparison.OrdinalIgnoreCase);
+                bool isStationaryCat = !string.Equals(categoryName, "Person", StringComparison.OrdinalIgnoreCase);
                 //bool isStationaryCat = StationaryCategories.Exists(s => string.Equals(s, categoryName, StringComparison.OrdinalIgnoreCase));
+
+                //Vector3 worldPos;
+                Vector2 hitWorldSize;
+                bool hasDepth = _depthRaycast.TryGetSize(_outRectT, transform, false, _centerCam, out worldPos, out hitWorldSize);
 
                 if (isVehicle)
                 {
@@ -158,14 +202,28 @@ namespace Niantic.Lightship.MetaQuest.InternalSamples
                         }
                         else
                         {
-                            // too far from all moving → spawn a fresh moving marker
-                            SpawnMarker(worldPos, isMoving: true, isStationary: false);
+                            if (canDetect)
+                            {
+
+                                // too far from all moving → spawn a fresh moving marker
+                                SpawnMarker(worldPos, isMoving: true, isStationary: false);
+
+                                /*                            if (hitWorldSize.x <= _bboxSizeThreshold)
+                                                                return;*/
+                            }
                         }
                     }
                     else
                     {
-                        // none exist yet → spawn first
-                        SpawnMarker(worldPos, isMoving: true, isStationary: false);
+                        if (canDetect)
+                        {
+
+                            // none exist yet → spawn first
+                            SpawnMarker(worldPos, isMoving: true, isStationary: false);
+
+                            /*                        if (hitWorldSize.x <= _bboxSizeThreshold)
+                                                        return;*/
+                        }
                     }
                 }
                 else if (isStationaryCat)
@@ -176,7 +234,24 @@ namespace Niantic.Lightship.MetaQuest.InternalSamples
                     if (!TryFindNearest(_stationary, worldPos, out var nearestS, out var sqrS) ||
                         sqrS > (stationarySpawnDistance * stationarySpawnDistance))
                     {
-                        SpawnMarker(worldPos, isMoving: false, isStationary: true);
+                        if (canDetect)
+                        {
+
+                            SpawnMarker(worldPos, isMoving: false, isStationary: true);
+
+                            /*                        if (hitWorldSize.x <= _bboxSizeThreshold)
+                                                        return;*/
+
+                            float radius = 2.0f;
+                            // Spawn two randomized markers around the input position
+                            for (int i = 0; i < 2; i++)
+                            {
+                                Vector2 rand = UnityEngine.Random.insideUnitCircle * radius;
+                                Vector3 offsetPos = worldPos + new Vector3(rand.x, 0f, rand.y);
+
+                                SpawnMarker(worldPos, isMoving: false, isStationary: true);
+                            }
+                        }
                     }
                     // else: close to an existing stationary marker → do nothing (we keep the old one)
                 }
@@ -191,21 +266,46 @@ namespace Niantic.Lightship.MetaQuest.InternalSamples
                 float keepSqr = movingKeepDistance * movingKeepDistance;
                 for (int i = _moving.Count - 1; i >= 0; i--)
                 {
+                    int nearestIndex = -1;
                     var m = _moving[i];
+                    var enemy = m.GetComponent<Enemy3>();
+
                     bool hasNearbyDetection = false;
                     for (int d = 0; d < _vehicleDetections.Count; d++)
                     {
                         if (SqrDist(m.transform.position, _vehicleDetections[d]) <= keepSqr)
                         {
                             hasNearbyDetection = true;
+                            nearestIndex = d;
                             break;
                         }
                     }
 
                     if (!hasNearbyDetection)
                     {
-                        m.Return();
-                        _moving.RemoveAt(i);
+                        if(enemy != null)
+                        {
+                            if (!enemy.unfollow)
+                            {
+                                enemy.unfollow = true;
+                            }
+                        }
+
+                        //m.Return();
+                        //_moving.RemoveAt(i);
+                    }
+                    else
+                    {
+                        if(enemy != null)
+                        {
+                            if(enemy.unfollow && enemy.trackTimer > 0)
+                            {
+                                Vector3 nearestTrackingPos = _vehicleDetections[nearestIndex];
+                                m.transform.position = nearestTrackingPos;
+                                enemy.unfollow = false;
+                                enemy.trackTimer = 1;
+                            }
+                        }
                     }
                 }
             }
@@ -230,11 +330,19 @@ namespace Niantic.Lightship.MetaQuest.InternalSamples
         // Object Pooling helper functions
 
         //----------------------------------------------------------------------
-        private ObjectPoolingUniversal RandomPool()
+        private ObjectPoolingUniversal RandomPool(bool isMoving)
         {
-            if (pools == null || pools.Length == 0) return null;
-            int i = UnityEngine.Random.Range(0, pools.Length);
-            return pools[i];
+            if (isMoving)
+            {
+                if (pools == null || pools.Length == 0) return null;
+                return pools[0];
+            }
+            else
+            {
+                if (pools == null || pools.Length == 0) return null;
+                int i = UnityEngine.Random.Range(1, pools.Length);
+                return pools[i];
+            }
         }
 
         private static float SqrDist(Vector3 a, Vector3 b) => (a - b).sqrMagnitude;
@@ -253,7 +361,7 @@ namespace Niantic.Lightship.MetaQuest.InternalSamples
 
         private PooledMarker SpawnMarker(Vector3 pos, bool isMoving, bool isStationary)
         {
-            var pool = RandomPool();
+            var pool = RandomPool(isMoving);
             if (pool == null) return null;
 
             var tr = pool.SpawnAt(pos);
@@ -261,6 +369,7 @@ namespace Niantic.Lightship.MetaQuest.InternalSamples
 
             var tag = tr.GetComponent<PooledMarker>();
             if (tag == null) tag = tr.gameObject.AddComponent<PooledMarker>();
+            tag.DetectionResultsManager = this;
             tag.moving = isMoving;
             tag.stationary = isStationary;
             tag.ownerPool = pool;

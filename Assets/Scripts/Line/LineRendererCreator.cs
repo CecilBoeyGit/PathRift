@@ -218,7 +218,7 @@ public class LineRendererCreator : MonoBehaviour
         Vector3 mainCamPos = _depthRaycast.TryPlace(_rectPlaceholder, _centerCam.transform, true, _centerCam);
         //mainCamPos = useDebugObject ? playerTracking.transform.position : mainCamPos;
         mainCamPos = useDebugObject ? playerTracking.transform.position : _centerCam.transform.position;
-        mainCamPos.z += initialHeightOffset;
+        // mainCamPos.z += initialHeightOffset;
         mainCamPos.y += initialHeightOffset;
 
         Vector3 storedPos = _lineMain.useWorldSpace? mainCamPos : _lineMain.transform.InverseTransformPoint(mainCamPos);

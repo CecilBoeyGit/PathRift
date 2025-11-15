@@ -27,7 +27,7 @@ public class ContinuousVoiceListener : MonoBehaviour
     IEnumerator StartVoiceExp()
     {
         // Wait for Unity and OVR audio to initialize
-        yield return new WaitForSeconds(3f);
+        yield return new WaitForSeconds(5f);
 
         if (!Permission.HasUserAuthorizedPermission(Permission.Microphone))
         {
