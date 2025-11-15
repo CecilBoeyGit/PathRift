@@ -33,9 +33,15 @@ public class Enemy1 : MonoBehaviour
 
     void Start()
     {
+        SetInitialRot();
         InitializePool();
         player = GameObject.FindGameObjectWithTag("Player").transform;
         ChangeState(EnemyState.Aiming);
+    }
+
+    void SetInitialRot()
+    {
+        transform.rotation = Quaternion.LookRotation(player.position - transform.position);
     }
 
     void Update()

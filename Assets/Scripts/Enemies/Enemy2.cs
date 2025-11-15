@@ -37,6 +37,7 @@ public class Enemy2 : MonoBehaviour
 
     void Start()
     {
+        SetInitialRot();
         GameObject p = GameObject.FindGameObjectWithTag("Player");
         if (p != null)
         {
@@ -48,6 +49,11 @@ public class Enemy2 : MonoBehaviour
 
         if (!isStunned)
             shootRoutine = StartCoroutine(ShootLoop());
+    }
+
+    void SetInitialRot()
+    {
+        transform.rotation = Quaternion.LookRotation(player.position - transform.position);
     }
 
     void Update()

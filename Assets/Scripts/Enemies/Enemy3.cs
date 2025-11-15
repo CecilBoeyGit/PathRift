@@ -32,6 +32,7 @@ public class Enemy3 : MonoBehaviour
 
     void Start()
     {
+        SetInitialRot();
         lineRenderer = GetComponent<LineRenderer>();
         lineRenderer.enabled = false;
 
@@ -39,6 +40,11 @@ public class Enemy3 : MonoBehaviour
 
         if (!isStunned)
             laserRoutine = StartCoroutine(LaserLoop());
+    }
+
+    void SetInitialRot()
+    {
+        transform.rotation = Quaternion.LookRotation(player.position - transform.position);
     }
 
     void Update()

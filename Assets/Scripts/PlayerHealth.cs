@@ -114,6 +114,9 @@ public class PlayerHealth : MonoBehaviour
     public void DealLaserDamage(float dmgAmount)
     {
         currentHealth -= dmgAmount;
+        currentHealth = Mathf.Max(currentHealth, 0f);
+
+        onHealthChanged.Invoke(currentHealth, maxHealth);
         UpdateHealthUI();
     }
 
