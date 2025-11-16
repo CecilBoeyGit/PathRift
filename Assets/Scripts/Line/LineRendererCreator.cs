@@ -103,6 +103,17 @@ public class LineRendererCreator : MonoBehaviour
         // --- Unsubscrible to hand gesture events ---
         // -= AddPoint_Called
         // -= DeletePoint_Called
+
+        StartGame();
+
+    }
+
+    public void StartGame()
+    {
+        foreach(GameObject child in _markers)
+        {
+            child.SetActive(false);    
+        }
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created

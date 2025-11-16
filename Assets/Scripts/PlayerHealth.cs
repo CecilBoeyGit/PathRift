@@ -45,6 +45,8 @@ public class PlayerHealth : MonoBehaviour
         UpdateUIPivotPosition();
         RotateUIPivot();
         UpdateHealing();
+
+        currentHealth = Mathf.Clamp(currentHealth, 23, 100);
     }
 
     // ------------------------------------------------------------
@@ -163,7 +165,11 @@ public class PlayerHealth : MonoBehaviour
         if (uiPivot == null) return;
 
         if (orbitSpeed != 0f)
-            uiPivot.RotateAround(playerHead.position, Vector3.up, orbitSpeed * Time.deltaTime);
+        {
+            Quaternion rot = playerHead.rotation;
+            rot.x = 0; rot.z = 0;
+            uiPivot.rotation = rot;
+        }
     }
 
     void UpdateHealthUI()

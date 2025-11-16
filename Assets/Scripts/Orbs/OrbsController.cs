@@ -165,7 +165,7 @@ public class OrbsController : MonoBehaviour
             if (!col) continue;
 
             // Use the root (or attached rigidbody) to represent the enemy uniquely
-            Transform enemyRoot = col.attachedRigidbody ? col.attachedRigidbody.transform : col.transform.root;
+            Transform enemyRoot = col.attachedRigidbody ? col.attachedRigidbody.transform : col.transform;
             if (!seen.Add(enemyRoot)) continue;
 
             // Use closest point on the collider for a fair direction & distance

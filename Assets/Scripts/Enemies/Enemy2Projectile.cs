@@ -12,9 +12,19 @@ public class Enemy2Projectile : MonoBehaviour
     private bool hasExploded = false;
     private Coroutine lifeTimerRoutine;
 
+    public Transform cube;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
+    }
+
+    void Update()
+    {
+        Vector3 diagonalAxis = new Vector3(1f, 1f, 1f).normalized;
+
+    // Rotate 60 degrees per second around that diagonal axis
+        transform.Rotate(diagonalAxis * 200 * Time.deltaTime, Space.Self);
     }
 
     public void ActivateProjectile()

@@ -12,6 +12,8 @@ public class Orb : MonoBehaviour
     public Vector3 hitPos;
     public ParticleSystem[] particleEffects;
     public OrbsController orbsController;
+    public MeshRenderer orbRend;
+    public Color[] colors;
 
     public float orbsLaunched, speed = 8;
 
@@ -107,6 +109,7 @@ public class Orb : MonoBehaviour
 
         elementState = index; // update the current element mode
         particleEffects[index].Play();
+        orbRend.material.SetColor("_EmissionColor", colors[index]);
     }
 
     // -------------------- FIRE FUNCTIONS -------------------- //
@@ -184,14 +187,14 @@ public class Orb : MonoBehaviour
 
             // --- Uniform scaling (XYZ) ---
             float scaleMult = Random.Range(1.2f, 1.6f);
-            Vector3 newScale = Vector3.one * scaleMult * (1f + 0.25f * orbsLaunched);
+            Vector3 newScale = Vector3.one * scaleMult * (1f + 0.3f * (orbsLaunched - 1));
 
             // Assign scale properly through your flame behavior script
             FlameBehavior fb = flame.GetComponent<FlameBehavior>();
             if (fb != null)
             {
                 fb.SetTargetScale(newScale);
-                fb.SetDamageMult(1 + 0.2f * orbsLaunched);
+                fb.SetDamageMult(1 + 0.3f * (orbsLaunched - 1));
             }
                 
             else

@@ -19,7 +19,7 @@ public class PinchDetection : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Vector3.Distance(gestureScript.fingerbones[5].Transform.position, gestureScript.fingerbones[10].Transform.position) <= 0.015f && (centerEye.position.y - gestureScript.gameObject.transform.position.y) < 0.4f)
+        if (Vector3.Distance(gestureScript.fingerbones[5].Transform.position, gestureScript.fingerbones[10].Transform.position) <= 0.015f && (centerEye.position.y - gestureScript.gameObject.transform.position.y) < 0.3f)
         {
             if (!pinched)
             {

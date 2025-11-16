@@ -38,6 +38,9 @@ namespace Niantic.Lightship.MetaQuest.InternalSamples
         public void SetText(string text)
         {
             _text.text = text;
+            Color textColor = _text.color;
+            textColor.a = 0.0f;
+            _text.color = textColor;
         }
 
         public RectTransform getRectTransform()

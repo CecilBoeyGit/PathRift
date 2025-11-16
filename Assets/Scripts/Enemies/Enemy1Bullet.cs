@@ -44,7 +44,7 @@ public class Enemy1Bullet : MonoBehaviour
         if (other.gameObject.tag == "Player")
         {
             PlayerHealth playerHealth = other.gameObject.GetComponent<PlayerHealth>();
-            playerHealth.DealDamage(12f);
+            playerHealth.DealDamage(3f);
         }
         this.gameObject.SetActive(false);
     }

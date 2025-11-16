@@ -27,8 +27,8 @@ namespace Niantic.Lightship.MetaQuest.InternalSamples
         [SerializeField] private List<string> StationaryCategories = new() { "Bench", "TrafficLight", "Sign" };
 
         // Distances (meters)
-        [SerializeField] private float movingKeepDistance = 2.0f;      // moving markers MUST have a detection within this to stay
-        [SerializeField] private float stationarySpawnDistance = 10.0f; // spawn a new stationary marker if all existing are farther
+        [SerializeField] private float movingKeepDistance = 3.0f;      // moving markers MUST have a detection within this to stay
+        [SerializeField] private float stationarySpawnDistance = 20.0f; // spawn a new stationary marker if all existing are farther
 
         // Tracking
         public List<PooledMarker> _moving = new();
@@ -62,9 +62,32 @@ namespace Niantic.Lightship.MetaQuest.InternalSamples
         private float _bboxSizeThreshold = 6.0f;
 
         [SerializeField]
+        private float _minDistanceThreshold = 8.0f;
+        [SerializeField]
+        private float _maxDistanceThreshold = 15.0f;
+
+        [SerializeField]
         private float _detectionInterval = 2.0f;
         private float timer;
         bool canDetect = false;
+
+        bool maxEnemiesCountReached = false;
+
+
+
+[Header("Health Cross Settings")]
+[SerializeField] private ObjectPoolingUniversal healthCrossPool;
+
+// Tracks active crosses per detection
+private Dictionary<int, PooledMarker> activeHealthCrosses = new();
+private HashSet<int> personsDetectedThisFrame = new();
+
+
+
+
+
+
+        bool _StartGame = false;
 
         // Colors to assign to each category
         private readonly Color[] _colors =
@@ -111,6 +134,29 @@ namespace Niantic.Lightship.MetaQuest.InternalSamples
             {
                 StartCoroutine(DelayBeforeReset());
             }
+
+            if(_moving.Count + _stationary.Count >= 8)
+            {
+                maxEnemiesCountReached = true;
+            }
+            else
+            {
+                maxEnemiesCountReached = false;
+            }
+        }
+
+        public void StartGame()
+        {
+             StartCoroutine(StartGameProcess());
+        }
+
+        private IEnumerator StartGameProcess()
+        {
+            _StartGame = false;
+
+            yield return new WaitForSeconds(7.0f);
+
+            _StartGame = true;
         }
 
         private IEnumerator DelayBeforeReset()
@@ -130,14 +176,22 @@ namespace Niantic.Lightship.MetaQuest.InternalSamples
             _objectDetectionManager.ObjectDetectionsUpdated += ObjectDetectionManager_ObjectDetectionsUpdated;
         }
 
+Vector3 refTrackingVector;
+
         private void ObjectDetectionManager_ObjectDetectionsUpdated(ARObjectDetectionsUpdatedEventArgs args)
         {
+            if(!_StartGame)
+                return;
+
             // UI cleanup only
             _drawRect.ClearRects();
             _drawRectOriginal.ClearRects();
 
             _vehicleDetections.Clear();
             _stationaryDetections.Clear();
+
+            personsDetectedThisFrame.Clear();
+
 
             var result = args.Results;
             if (result == null || result.Count == 0)
@@ -176,16 +230,58 @@ namespace Niantic.Lightship.MetaQuest.InternalSamples
                 // Original world position output from Raycasting against depth
 
                 Vector3 worldPos = _depthRaycast.TryPlace(_outRectT, transform, false, _centerCam);
+                if(worldPos == Vector3.zero)
+                    continue;
+
+                float distanceToPlayer = Vector3.Distance(worldPos, _centerCam.transform.position);
 
                 // ------------------------------------------------------------------------------------------------------------------------------------------------
 
-                bool isVehicle = string.Equals(categoryName, "Person", StringComparison.OrdinalIgnoreCase);
-                bool isStationaryCat = !string.Equals(categoryName, "Person", StringComparison.OrdinalIgnoreCase);
+                bool isVehicle = string.Equals(categoryName, "Vehicle", StringComparison.OrdinalIgnoreCase);
+                bool isPerson = string.Equals(categoryName, "Person", StringComparison.OrdinalIgnoreCase);
+                bool isStationaryCat = !string.Equals(categoryName, "Vehicle", StringComparison.OrdinalIgnoreCase);
                 //bool isStationaryCat = StationaryCategories.Exists(s => string.Equals(s, categoryName, StringComparison.OrdinalIgnoreCase));
 
                 //Vector3 worldPos;
-                Vector2 hitWorldSize;
-                bool hasDepth = _depthRaycast.TryGetSize(_outRectT, transform, false, _centerCam, out worldPos, out hitWorldSize);
+                //Vector2 hitWorldSize;
+                //bool hasDepth = _depthRaycast.TryGetSize(_outRectT, transform, false, _centerCam, out worldPos, out hitWorldSize);
+
+
+
+                // -------------------------------
+                // PERSON DETECTION HANDLING
+                // -------------------------------
+                if (isPerson)
+                {
+                    // Create a stable ID for this detection using rect hash
+                    int detectionID = rect.GetHashCode();
+
+                    personsDetectedThisFrame.Add(detectionID);
+
+                    // Already exists → update cross position
+                    if (activeHealthCrosses.TryGetValue(detectionID, out var existingCross))
+                    {
+                        existingCross.transform.position = worldPos;
+                    }
+                    else
+                    {
+                        // New Person → spawn a new HealthCross
+                        var tr = healthCrossPool.SpawnAt(worldPos);
+                        if (tr != null)
+                        {
+                            var marker = tr.GetComponent<PooledMarker>();
+                            if (marker == null)
+                                marker = tr.gameObject.AddComponent<PooledMarker>();
+
+                            marker.ownerPool = healthCrossPool;
+
+                            activeHealthCrosses.Add(detectionID, marker);
+                        }
+                    }
+                }
+
+
+
 
                 if (isVehicle)
                 {
@@ -202,27 +298,32 @@ namespace Niantic.Lightship.MetaQuest.InternalSamples
                         }
                         else
                         {
-                            if (canDetect)
+                            if (canDetect && !maxEnemiesCountReached)
                             {
+                                if(distanceToPlayer >= _minDistanceThreshold && distanceToPlayer <= _maxDistanceThreshold)
+                                {
+                                    // too far from all moving → spawn a fresh moving marker
+                                    var currentTag = SpawnMarker(worldPos, isMoving: true, isStationary: false);
 
-                                // too far from all moving → spawn a fresh moving marker
-                                SpawnMarker(worldPos, isMoving: true, isStationary: false);
-
-                                /*                            if (hitWorldSize.x <= _bboxSizeThreshold)
-                                                                return;*/
+                                    /*                            if (hitWorldSize.x <= _bboxSizeThreshold)
+                                                                    return;*/
+                                }
                             }
                         }
                     }
                     else
                     {
-                        if (canDetect)
+                        if (canDetect && !maxEnemiesCountReached)
                         {
 
-                            // none exist yet → spawn first
-                            SpawnMarker(worldPos, isMoving: true, isStationary: false);
+                                if(distanceToPlayer >= _minDistanceThreshold && distanceToPlayer <= _maxDistanceThreshold)
+                                {
+                                    // too far from all moving → spawn a fresh moving marker
+                                    var currentTag = SpawnMarker(worldPos, isMoving: true, isStationary: false);
 
-                            /*                        if (hitWorldSize.x <= _bboxSizeThreshold)
-                                                        return;*/
+                                    /*                            if (hitWorldSize.x <= _bboxSizeThreshold)
+                                                                    return;*/
+                                }
                         }
                     }
                 }
@@ -234,29 +335,79 @@ namespace Niantic.Lightship.MetaQuest.InternalSamples
                     if (!TryFindNearest(_stationary, worldPos, out var nearestS, out var sqrS) ||
                         sqrS > (stationarySpawnDistance * stationarySpawnDistance))
                     {
-                        if (canDetect)
+                        if (canDetect && !maxEnemiesCountReached)
                         {
+                                if(distanceToPlayer > _minDistanceThreshold && distanceToPlayer < _maxDistanceThreshold)
+                                {
+                            var currentTag = SpawnMarker(worldPos, isMoving: false, isStationary: true);
 
-                            SpawnMarker(worldPos, isMoving: false, isStationary: true);
+                            float distDoubleCheck = Vector3.Distance(currentTag.gameObject.transform.position, _centerCam.transform.position);
+                            if(distDoubleCheck < _minDistanceThreshold)
+                                {
+                                    currentTag.Return();
+                                    int index = _stationary.IndexOf(currentTag);
+                                    _stationary.RemoveAt(index);
+                                }
 
                             /*                        if (hitWorldSize.x <= _bboxSizeThreshold)
                                                         return;*/
 
-                            float radius = 2.0f;
-                            // Spawn two randomized markers around the input position
-                            for (int i = 0; i < 2; i++)
-                            {
-                                Vector2 rand = UnityEngine.Random.insideUnitCircle * radius;
-                                Vector3 offsetPos = worldPos + new Vector3(rand.x, 0f, rand.y);
+                            // float radius = 1.5f;
+                            // // Spawn two randomized markers around the input position
+                            // for (int i = 0; i < 2; i++)
+                            // {
+                            //     Vector2 rand = UnityEngine.Random.insideUnitCircle * radius;
+                            //     Vector3 offsetPos = worldPos + new Vector3(rand.x, 0f, rand.y);
 
-                                SpawnMarker(worldPos, isMoving: false, isStationary: true);
-                            }
+                            //     SpawnMarker(worldPos, isMoving: false, isStationary: true);
+                            // }
+                                }
                         }
                     }
                     // else: close to an existing stationary marker → do nothing (we keep the old one)
                 }
                 // else: ignore other categories
             }
+            // -------------------------------
+
+
+
+            // FORLOOP END
+            
+
+
+            // -------------------------------
+
+
+
+
+            // -------------------------------
+            // CLEANUP LOST PERSON DETECTIONS
+            // -------------------------------
+
+            List<int> toRemove = new List<int>();
+
+            foreach (var kvp in activeHealthCrosses)
+            {
+                int id = kvp.Key;
+                if (!personsDetectedThisFrame.Contains(id))
+                {
+                    kvp.Value.Return();
+                    toRemove.Add(id);
+                }
+            }
+
+            // Remove cleaned entries
+            foreach (int id in toRemove)
+                activeHealthCrosses.Remove(id);
+
+            // -------------------------------
+            // CLEANUP LOST PERSON DETECTIONS
+            // -------------------------------
+
+
+
+
 
             // --- RECONCILE / CLEANUP ---
 
@@ -298,10 +449,10 @@ namespace Niantic.Lightship.MetaQuest.InternalSamples
                     {
                         if(enemy != null)
                         {
-                            if(enemy.unfollow && enemy.trackTimer > 0)
+                            if(enemy.trackTimer > 0)
                             {
                                 Vector3 nearestTrackingPos = _vehicleDetections[nearestIndex];
-                                m.transform.position = nearestTrackingPos;
+                                m.transform.position = Vector3.SmoothDamp(m.transform.position, nearestTrackingPos, ref refTrackingVector, 10.0f);
                                 enemy.unfollow = false;
                                 enemy.trackTimer = 1;
                             }
@@ -320,7 +471,7 @@ namespace Niantic.Lightship.MetaQuest.InternalSamples
         {
             // Return a constant color
             Color col = Color.cyan;
-            col.a = 0.2f;
+            col.a = 0.0f;
             return col;
         }
 

@@ -50,7 +50,7 @@ public class RaycastDepth : MonoBehaviour
         }
         else
         {
-            return Ray.origin;
+            return Vector3.zero;
         }
     }
 

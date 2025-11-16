@@ -19,6 +19,9 @@ public class Enemy3 : MonoBehaviour
     public float laserYoffsetMax = 0.08f;
     float currentLaserYOffset;
 
+    int fireLayer;
+    int ignoreFireMask;
+
     [Tooltip("Damage per second the laser applies to the player.")]
     public float laserDPS = 15f;
 
@@ -29,6 +32,7 @@ public class Enemy3 : MonoBehaviour
     private Transform player;
     private LineRenderer lineRenderer;
     private Coroutine laserRoutine;
+    EnemyStartPosSetting startPosSetting;
     private bool isStunned = false;
 
     public bool unfollow = false;
@@ -36,11 +40,14 @@ public class Enemy3 : MonoBehaviour
 
     void Start()
     {
+        fireLayer = LayerMask.NameToLayer("Flame");
+        ignoreFireMask = ~(1 << fireLayer);
         SetInitialRot();
         lineRenderer = GetComponent<LineRenderer>();
         lineRenderer.enabled = false;
 
         player = GameObject.FindGameObjectWithTag("Player").transform;
+        StartPos();
 
         if (!isStunned)
             laserRoutine = StartCoroutine(LaserLoop());
@@ -49,6 +56,12 @@ public class Enemy3 : MonoBehaviour
     void SetInitialRot()
     {
         transform.rotation = Quaternion.LookRotation(player.position - transform.position);
+    }
+
+    void StartPos()
+    {
+        startPosSetting = GetComponent<EnemyStartPosSetting>();
+        startPosSetting.CheckAndSetYPos(player);
     }
 
     void Update()
@@ -130,7 +143,7 @@ public class Enemy3 : MonoBehaviour
         Vector3 direction = ((player.position - new Vector3(0, 0.35f, 0)) - origin).normalized;
 
         // Raycast
-        if (Physics.Raycast(origin, direction, out RaycastHit hit, maxLaserDistance))
+        if (Physics.Raycast(origin, direction, out RaycastHit hit, maxLaserDistance, ignoreFireMask))
         {
             lineRenderer.SetPosition(0, origin);
             lineRenderer.SetPosition(1, hit.point);

@@ -4917,6 +4917,7 @@ GameObject:
   - component: {fileID: 4158254038629599025}
   - component: {fileID: 663807656455473454}
   - component: {fileID: 8323565680103799439}
+  - component: {fileID: 1210063465407154699}
   m_Layer: 6
   m_Name: Enemy 1
   m_TagString: Enemy
@@ -5014,7 +5015,7 @@ MonoBehaviour:
         m_CallState: 2
   isDmged: 0
   dmgDuration: 3
-  dmgRate: 1
+  dmgRate: 15
 --- !u!65 &8323565680103799439
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5036,6 +5037,18 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.2, y: 1.2, z: 1.6}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1210063465407154699
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9083990421814974794}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64d350778d57c904c86ce460436c7dad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &5237075951900498836
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5048,6 +5061,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: EnemyShooter
       objectReference: {fileID: 0}
+    - target: {fileID: 6484248586696530428, guid: 2d89a28d92d41c84cbfb920e333cf455, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 84f3677afb700c44f823a3376255df07, type: 2}
     - target: {fileID: 8488465297428199176, guid: 2d89a28d92d41c84cbfb920e333cf455, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.0034856866

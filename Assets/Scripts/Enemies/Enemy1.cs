@@ -23,6 +23,7 @@ public class Enemy1 : MonoBehaviour
     public int poolSize = 20;
 
     private EnemyState currentState = EnemyState.Idle;
+    EnemyStartPosSetting startPosSetting;
     private Coroutine shootRoutine;
     private List<GameObject> bulletPool;
     private int poolIndex = 0;
@@ -37,6 +38,13 @@ public class Enemy1 : MonoBehaviour
         InitializePool();
         player = GameObject.FindGameObjectWithTag("Player").transform;
         ChangeState(EnemyState.Aiming);
+        StartPos();
+    }
+
+    void StartPos()
+    {
+        startPosSetting = GetComponent<EnemyStartPosSetting>();
+        startPosSetting.CheckAndSetYPos(player);
     }
 
     void SetInitialRot()

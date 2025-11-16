@@ -26,18 +26,21 @@ public class Enemy2 : MonoBehaviour
     private Transform player;
     private Vector3 lastPlayerPos;
     private Vector3 playerVelocity;
+
     private Coroutine shootRoutine;
 
     private List<GameObject> projectilePool;
     private int poolIndex = 0;
 
-    // --- stun handling ---
+    EnemyStartPosSetting startPosSetting;
+
+    // stun
     public ParticleSystem stunParticle;
     private bool isStunned = false;
 
     void Start()
     {
-        SetInitialRot();
+        // Set initial rot safely — player may not exist yet
         GameObject p = GameObject.FindGameObjectWithTag("Player");
         if (p != null)
         {
@@ -45,15 +48,22 @@ public class Enemy2 : MonoBehaviour
             lastPlayerPos = player.position;
         }
 
+        SetInitialRot();
         InitializePool();
-
-        if (!isStunned)
-            shootRoutine = StartCoroutine(ShootLoop());
+        StartPos();
     }
 
     void SetInitialRot()
     {
-        transform.rotation = Quaternion.LookRotation(player.position - transform.position);
+        if (player != null)
+            transform.rotation = Quaternion.LookRotation(player.position - transform.position);
+    }
+
+    void StartPos()
+    {
+        startPosSetting = GetComponent<EnemyStartPosSetting>();
+        if (startPosSetting != null && player != null)
+            startPosSetting.CheckAndSetYPos(player);
     }
 
     void Update()
@@ -64,30 +74,33 @@ public class Enemy2 : MonoBehaviour
         RotateBodyAndShootPivot();
     }
 
-    // -------------------------
-    // Player velocity tracking
-    // -------------------------
+    // --------------------------------------------------------------------
+    // VELOCITY TRACKING
+    // --------------------------------------------------------------------
     void TrackPlayerVelocity()
     {
         playerVelocity = (player.position - lastPlayerPos) / Time.deltaTime;
         lastPlayerPos = player.position;
     }
 
-    // --------------------------------------------------------
-    // Rotate body (Y only) and pitch shootPivot for mortar arc
-    // --------------------------------------------------------
+    // --------------------------------------------------------------------
+    // ROTATION
+    // --------------------------------------------------------------------
     void RotateBodyAndShootPivot()
     {
         if (!bodyPivot || !shootPivot) return;
 
+        // Horizontal body rotation
         Vector3 toPlayerFromBody = player.position - bodyPivot.position;
         Vector3 flatDir = new Vector3(toPlayerFromBody.x, 0f, toPlayerFromBody.z);
-        if (flatDir.sqrMagnitude > 0.0001f)
+
+        if (flatDir.sqrMagnitude > 0.001f)
         {
             Quaternion bodyTarget = Quaternion.LookRotation(flatDir.normalized, Vector3.up);
             bodyPivot.rotation = Quaternion.Slerp(bodyPivot.rotation, bodyTarget, Time.deltaTime * rotationSpeed);
         }
 
+        // Angle calc
         Vector3 toTargetFromShoot = player.position - shootPivot.position;
         float distance = new Vector3(toTargetFromShoot.x, 0f, toTargetFromShoot.z).magnitude;
         float height = toTargetFromShoot.y;
@@ -96,7 +109,8 @@ public class Enemy2 : MonoBehaviour
 
         float launchAngleDeg = fallbackLaunchAngle;
         float inside = v * v * v * v - g * (g * distance * distance + 2f * height * v * v);
-        if (inside >= 0f && distance > 0.001f)
+
+        if (inside >= 0f && distance > 0.01f)
         {
             float sqrt = Mathf.Sqrt(inside);
             float angle1 = Mathf.Atan((v * v + sqrt) / (g * distance)) * Mathf.Rad2Deg;
@@ -109,12 +123,13 @@ public class Enemy2 : MonoBehaviour
         shootPivot.localRotation = Quaternion.Slerp(shootPivot.localRotation, pitchTarget, Time.deltaTime * rotationSpeed);
     }
 
-    // -------------------------
-    // Pooling
-    // -------------------------
+    // --------------------------------------------------------------------
+    // POOLING
+    // --------------------------------------------------------------------
     void InitializePool()
     {
         projectilePool = new List<GameObject>(projectilePoolSize);
+
         for (int i = 0; i < projectilePoolSize; i++)
         {
             GameObject proj = Instantiate(projectilePrefab);
@@ -125,22 +140,21 @@ public class Enemy2 : MonoBehaviour
 
     GameObject GetProjectileFromPool()
     {
-        if (projectilePool == null || projectilePool.Count == 0)
-            return null;
-
         GameObject proj = projectilePool[poolIndex];
         poolIndex = (poolIndex + 1) % projectilePool.Count;
         return proj;
     }
 
-    // -------------------------
-    // Shooting loop
-    // -------------------------
+    // --------------------------------------------------------------------
+    // SHOOT LOOP (ONLY STARTED IN OnEnable)
+    // --------------------------------------------------------------------
     IEnumerator ShootLoop()
     {
         while (true)
         {
-            yield return new WaitForSeconds(Random.Range(minShootDelay, maxShootDelay));
+            float delay = Random.Range(minShootDelay, maxShootDelay);
+            yield return new WaitForSeconds(delay);
+
             if (!isStunned)
                 FireMortar();
         }
@@ -148,116 +162,114 @@ public class Enemy2 : MonoBehaviour
 
     void FireMortar()
     {
-        if (isStunned || player == null || shootPos == null) return;
+        if (player == null || shootPos == null || isStunned)
+            return;
 
+        // Predictive aim
         Vector3 predicted = PredictImpactPoint(player.position, playerVelocity, projectileSpeed);
+
+        // Add horizontal landing error
         Vector2 rnd = Random.insideUnitCircle * Random.Range(0f, horizontalErrorRange);
         predicted += new Vector3(rnd.x, 0f, rnd.y);
 
         GameObject proj = GetProjectileFromPool();
-        if (proj == null) return;
-
         proj.transform.position = shootPos.position;
         proj.transform.rotation = shootPos.rotation;
         proj.SetActive(true);
 
         Rigidbody rb = proj.GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.isKinematic = false;
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-            Vector3 launchDir = shootPos.forward.normalized;
-            Vector3 desiredVelocity = launchDir * projectileSpeed;
-            rb.AddForce(desiredVelocity * rb.mass * 0.95f, ForceMode.Impulse);
-        }
 
-        Enemy2Projectile pScript = proj.GetComponent<Enemy2Projectile>();
-        if (pScript != null)
-            pScript.ActivateProjectile();
+        rb.isKinematic = false;
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+
+        Vector3 launchDir = shootPos.forward.normalized;
+        Vector3 desiredVelocity = launchDir * projectileSpeed;
+
+        rb.AddForce(desiredVelocity * rb.mass * 0.95f, ForceMode.Impulse);
+
+        proj.GetComponent<Enemy2Projectile>()?.ActivateProjectile();
     }
 
     Vector3 PredictImpactPoint(Vector3 playerPos, Vector3 playerVel, float speed)
     {
         Vector3 toPlayer = playerPos - (shootPos != null ? shootPos.position : transform.position);
         float distance = toPlayer.magnitude;
+
         if (speed <= 0f) return playerPos;
+
         float flightTime = distance / speed;
         return playerPos + playerVel * flightTime;
     }
 
     // --------------------------------------------------------------------
-    // UNITY EVENT HOOKS (plug into EnemyHealth events)
+    // STUN EVENTS
     // --------------------------------------------------------------------
     public void OnStunned()
     {
         if (isStunned) return;
+
         isStunned = true;
+
         if (shootRoutine != null)
+        {
             StopCoroutine(shootRoutine);
-        
-        stunParticle.Play();
-        shootRoutine = null;
-        Debug.Log($"{name} stunned — mortar disabled");
+            shootRoutine = null;
+        }
+
+        stunParticle?.Play();
     }
 
     public void OnUnstunned()
     {
         if (!isStunned) return;
+
         isStunned = false;
-        stunParticle.Stop();
-        if (shootRoutine == null)
-            shootRoutine = StartCoroutine(ShootLoop());
-        Debug.Log($"{name} recovered from stun — mortar active again");
+        stunParticle?.Stop();
+
+        // DO NOT restart ShootLoop here — it's handled by OnEnable()
     }
 
+    // --------------------------------------------------------------------
+    // ENABLE / DISABLE (POOL SAFE)
+    // --------------------------------------------------------------------
     void OnEnable()
     {
-        // Reset stun state
         isStunned = false;
 
-        // Stop particles just in case
-        if (stunParticle != null)
-            stunParticle.Stop();
+        stunParticle?.Stop();
 
-        // Reset player velocity tracking
-        playerVelocity = Vector3.zero;
-
-        // Reset last player position
-        if (player != null)
-            lastPlayerPos = player.position;
-
-        // Stop orphaned coroutine
-        if (shootRoutine != null)
-            StopCoroutine(shootRoutine);
-        shootRoutine = null;
-
-        // Reset rotation
+        // ensure player reference exists
         if (player == null)
         {
             GameObject p = GameObject.FindGameObjectWithTag("Player");
             if (p != null)
                 player = p.transform;
         }
+
+        // reset velocity tracking
+        if (player != null)
+            lastPlayerPos = player.position;
+
+        playerVelocity = Vector3.zero;
+
+        // reset orientation
         SetInitialRot();
 
-        // Start firing loop again
-        if (!isStunned)
-            shootRoutine = StartCoroutine(ShootLoop());
+        // START SHOOT LOOP — ONLY PLACE IN THE SCRIPT
+        shootRoutine = StartCoroutine(ShootLoop());
     }
 
     void OnDisable()
     {
-        // Stop shoot routine
         if (shootRoutine != null)
+        {
             StopCoroutine(shootRoutine);
-        shootRoutine = null;
+            shootRoutine = null;
+        }
 
-        // Stop stun particle if still active
-        if (stunParticle != null)
-            stunParticle.Stop();
+        stunParticle?.Stop();
     }
-
 
 #if UNITY_EDITOR
     void OnDrawGizmosSelected()
